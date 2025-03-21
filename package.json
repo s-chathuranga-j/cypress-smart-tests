@@ -1,0 +1,50 @@
+{
+  "name": "cypress-dependent-tests",
+  "version": "1.0.0",
+  "description": "Cypress plugin to manage dependencies between test cases",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "cypress run",
+    "prepare": "npm run build",
+    "lint": "eslint src --ext .ts",
+    "cypress:open": "cypress open"
+  },
+  "keywords": [
+    "cypress",
+    "cypress-plugin",
+    "testing",
+    "dependencies",
+    "test-dependencies",
+    "test-runner",
+    "e2e-testing"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/cypress-dependent-tests.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/cypress-dependent-tests/issues"
+  },
+  "homepage": "https://github.com/yourusername/cypress-dependent-tests#readme",
+  "peerDependencies": {
+    "cypress": ">=9.0.0"
+  },
+  "devDependencies": {
+    "cypress": "^12.0.0",
+    "typescript": "^4.9.0",
+    "@types/node": "^16.11.7",
+    "eslint": "^8.2.0",
+    "@typescript-eslint/eslint-plugin": "^5.4.0",
+    "@typescript-eslint/parser": "^5.4.0"
+  },
+  "engines": {
+    "node": ">=12.0.0"
+  }
+}
