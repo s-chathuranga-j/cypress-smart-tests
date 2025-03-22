@@ -5,11 +5,10 @@ A Cypress plugin for smart test execution with dependencies, conditional tests, 
 ## Features
 
 - Define dependencies between test cases
-- Automatically skip dependent tests if the parent test fails
+- Automatically skip dependent tests if the parent test fails with fail-fast option
 - Selectively execute tests based on environment variables, feature flags, or other conditions
 - Add custom before/after hooks to individual tests for setup and cleanup
 - Clear console output showing what was skipped and why
-- Optional failFast mode to stop after any parent failure
 - Easy-to-use API with minimal intrusion
 
 ## Installation
@@ -91,7 +90,7 @@ Configure the plugin.
 
 ### `resetState()`
 
-Reset the plugin state (useful for testing).
+Reset the plugin state
 
 ## Examples
 
