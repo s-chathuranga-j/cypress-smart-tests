@@ -158,6 +158,7 @@ export function cytest(
     if (options.runIf && !options.runIf()) {
       cy.log(`Skipping test "${name}" because runIf condition is not met`);
       cy.log('Test skipped');
+      this.skip(); // Skip this test instead of just returning
       return;
     }
 
@@ -238,6 +239,7 @@ cytest.only = function(
     if (options.runIf && !options.runIf()) {
       cy.log(`Skipping test "${name}" because runIf condition is not met`);
       cy.log('Test skipped');
+      this.skip(); // Skip this test instead of just returning
       return;
     }
 
