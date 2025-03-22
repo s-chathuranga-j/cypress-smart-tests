@@ -64,15 +64,22 @@ Cypress.on('fail', (error, runnable) => {
   markTestAsFailed(testName);
   console.log(`[DEBUG] Failed tests: ${JSON.stringify(window.failedTests)}`);
 
-  // Get all tests that depend on this test
-  const dependents = getDependentTests(testName);
+  // Get all tests that depend on this test directly
+  const directDependents = getDependentTests(testName);
 
-  console.log(`[DEBUG] Dependent tests for "${testName}": ${JSON.stringify(dependents)}`);
+  console.log(`[DEBUG] Direct dependent tests for "${testName}": ${JSON.stringify(directDependents)}`);
 
-  // Mark all dependent tests as failed too, to ensure they're skipped
-  dependents.forEach(dependent => {
-    console.log(`[DEBUG] Marking dependent test "${dependent}" as failed`);
+  // Mark all direct dependent tests as failed too, to ensure they're skipped
+  directDependents.forEach(dependent => {
+    console.log(`[DEBUG] Marking direct dependent test "${dependent}" as failed`);
     markTestAsFailed(dependent);
+
+    // Also mark any tests that depend on this dependent test (recursive)
+    const nestedDependents = getDependentTests(dependent);
+    nestedDependents.forEach(nestedDependent => {
+      console.log(`[DEBUG] Marking nested dependent test "${nestedDependent}" as failed`);
+      markTestAsFailed(nestedDependent);
+    });
   });
 
   console.log(`[DEBUG] Failed tests after marking dependents: ${JSON.stringify(window.failedTests)}`);
@@ -116,16 +123,37 @@ export function resetState(): void {
 /**
  * Check if a test should be skipped based on its dependencies
  * @param testName The name of the test
+ * @param visited Set of test names that have already been checked (to prevent infinite recursion)
  * @returns true if the test should be skipped, false otherwise
  */
-function shouldSkipTest(testName: string): boolean {
+function shouldSkipTest(testName: string, visited: Set<string> = new Set()): boolean {
+  // If we've already checked this test, return false to break the recursion
+  if (visited.has(testName)) {
+    return false;
+  }
+
+  // Add this test to the visited set
+  visited.add(testName);
+
   // Find all parent tests that this test depends on
   const parentTests = Object.entries(testDependencies)
     .filter(([_, dependents]) => dependents.includes(testName))
     .map(([parent, _]) => parent);
 
   // If any parent test has failed, skip this test
-  return parentTests.some(parent => hasTestFailed(parent));
+  if (parentTests.some(parent => hasTestFailed(parent))) {
+    return true;
+  }
+
+  // Also check for transitive dependencies (if A depends on B and B depends on C, then A indirectly depends on C)
+  for (const parent of parentTests) {
+    if (shouldSkipTest(parent, visited)) {
+      // If any parent should be skipped, this test should also be skipped
+      return true;
+    }
+  }
+
+  return false;
 }
 
 /**
@@ -172,8 +200,9 @@ export function cytest(
     if (failedParents.length > 0) {
       const parentTest = failedParents[0]; // Just take the first failed parent for the message
       cy.log(`Skipping test "${name}" because its dependency "${parentTest}" failed`);
-      // Instead of running the test, just pass it
+      // Skip this test instead of just returning
       cy.log('Test skipped');
+      this.skip();
       return;
     }
 
@@ -253,8 +282,9 @@ cytest.only = function(
     if (failedParents.length > 0) {
       const parentTest = failedParents[0]; // Just take the first failed parent for the message
       cy.log(`Skipping test "${name}" because its dependency "${parentTest}" failed`);
-      // Instead of running the test, just pass it
+      // Skip this test instead of just returning
       cy.log('Test skipped');
+      this.skip();
       return;
     }
 
@@ -324,9 +354,40 @@ afterEach(function(this: Mocha.Context) {
       markTestAsFailed(testName);
       console.log(`[DEBUG] Failed tests after update: ${JSON.stringify(window.failedTests)}`);
 
-      const dependents = getDependentTests(testName);
-      if (dependents.length > 0) {
-        console.log(`[DEBUG] Test "${testName}" failed. Dependent tests will be skipped: ${dependents.join(', ')}`);
+      // Get all direct dependent tests
+      const directDependents = getDependentTests(testName);
+
+      // Function to recursively get all dependent tests (including nested dependents)
+      function getAllDependents(testName: string, visited: Set<string> = new Set()): string[] {
+        if (visited.has(testName)) {
+          return [];
+        }
+        visited.add(testName);
+
+        const directDeps = getDependentTests(testName);
+        const allDeps = [...directDeps];
+
+        for (const dep of directDeps) {
+          const nestedDeps = getAllDependents(dep, visited);
+          allDeps.push(...nestedDeps);
+        }
+
+        return allDeps;
+      }
+
+      // Get all dependent tests (including nested dependents)
+      const allDependents = getAllDependents(testName);
+
+      if (allDependents.length > 0) {
+        console.log(`[DEBUG] Test "${testName}" failed. All dependent tests will be skipped: ${allDependents.join(', ')}`);
+
+        // Mark all dependent tests as failed too, to ensure they're skipped
+        allDependents.forEach(dependent => {
+          console.log(`[DEBUG] Marking dependent test "${dependent}" as failed`);
+          markTestAsFailed(dependent);
+        });
+
+        console.log(`[DEBUG] Failed tests after marking all dependents: ${JSON.stringify(window.failedTests)}`);
       }
     }
   }
