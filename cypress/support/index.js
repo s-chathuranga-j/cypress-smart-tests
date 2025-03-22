@@ -21,4 +21,4 @@
 
 // Import our plugin
 // Note: In real tests, you would import from the installed package
-// import { dependentIt, defineTestDependencies } from 'cypress-dependent-tests'
+// import { cytest, defineTestDependencies } from 'cypress-smart-tests'

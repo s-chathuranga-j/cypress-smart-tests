@@ -1,0 +1,387 @@
+
+> cypress-dependent-tests@1.0.0 test
+> cypress run
+DevTools listening on ws://127.0.0.1:50538/devtools/browser/c9cc6166-a978-4554-8d72-0966fd293d1b
+Missing baseUrl in compilerOptions. tsconfig-paths will be skipped
+================================================================================
+  (Run Starting)
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Cypress:        12.17.4                                                                        │
+  │ Browser:        Electron 106 (headless)                                                        │
+  │ Node Version:   v23.7.0 (/Users/ChathurangaEE/.nvm/versions/node/v23.7.0/bin/node)             │
+  │ Specs:          1 found (dependent-tests.spec.js)                                              │
+  │ Searched:       cypress/integration/**/*.{js,jsx,ts,tsx}                                       │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────────────────────────
+
+  Running:  dependent-tests.spec.js                                                         (1 of 1)
+  Cypress Dependent Tests Plugin
+    Basic Dependencies
+      1) Parent Test
+      2) Dependent Test 1
+      3) Dependent Test 2
+      4) Independent Test
+    Failed Parent Test
+      5) Failing Parent Test
+      6) Skipped Test 1
+      7) Skipped Test 2
+      8) Still Running Test
+    Complex Dependencies
+      9) Root Test
+      10) Level 1 Test A
+      11) Level 1 Test B
+      12) Level 2 Test
+    FailFast Mode
+      13) Critical Test
+      14) Subsequent Test 1
+      15) Subsequent Test 2
+      16) Subsequent Test 3
+  0 passing (591ms)
+  16 failing
+  1) Cypress Dependent Tests Plugin
+       Basic Dependencies
+         Parent Test:
+     CypressError: Cypress detected you registered a(n) `beforeAll` hook while a test was running (possibly a hook nested inside another hook). All hooks must be registered before a test begins executing.
+Move the `beforeAll` into a suite callback or the global scope.
+      at cypressErr (http://localhost:50539/__cypress/runner/cypress_runner.js:75187:18)
+      at Object.errByPath (http://localhost:50539/__cypress/runner/cypress_runner.js:75242:10)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144921:76)
+      at Suite.beforeAll (http://localhost:50539/__cypress/runner/cypress_runner.js:156848:19)
+      at Suite.<computed> [as beforeAll] (http://localhost:50539/__cypress/runner/cypress_runner.js:144929:23)
+      at before (http://localhost:50539/__cypress/runner/cypress_runner.js:160310:17)
+  From Your Spec Code:
+      at Context.eval (webpack://cypress-dependent-tests/./src/index.ts:142:4)
+  2) Cypress Dependent Tests Plugin
+       Basic Dependencies
+         Dependent Test 1:
+     CypressError: Cypress detected you registered a(n) `beforeAll` hook while a test was running (possibly a hook nested inside another hook). All hooks must be registered before a test begins executing.
+Move the `beforeAll` into a suite callback or the global scope.
+      at cypressErr (http://localhost:50539/__cypress/runner/cypress_runner.js:75187:18)
+      at Object.errByPath (http://localhost:50539/__cypress/runner/cypress_runner.js:75242:10)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144921:76)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite.beforeAll (http://localhost:50539/__cypress/runner/cypress_runner.js:156848:19)
+      at Suite.<computed> [as beforeAll] (http://localhost:50539/__cypress/runner/cypress_runner.js:144929:23)
+      at before (http://localhost:50539/__cypress/runner/cypress_runner.js:160310:17)
+  From Your Spec Code:
+      at Context.eval (webpack://cypress-dependent-tests/./src/index.ts:142:4)
+  3) Cypress Dependent Tests Plugin
+       Basic Dependencies
+         Dependent Test 2:
+     CypressError: Cypress detected you registered a(n) `beforeAll` hook while a test was running (possibly a hook nested inside another hook). All hooks must be registered before a test begins executing.
+Move the `beforeAll` into a suite callback or the global scope.
+      at cypressErr (http://localhost:50539/__cypress/runner/cypress_runner.js:75187:18)
+      at Object.errByPath (http://localhost:50539/__cypress/runner/cypress_runner.js:75242:10)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144921:76)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite.beforeAll (http://localhost:50539/__cypress/runner/cypress_runner.js:156848:19)
+      at Suite.<computed> [as beforeAll] (http://localhost:50539/__cypress/runner/cypress_runner.js:144929:23)
+      at before (http://localhost:50539/__cypress/runner/cypress_runner.js:160310:17)
+  From Your Spec Code:
+      at Context.eval (webpack://cypress-dependent-tests/./src/index.ts:142:4)
+  4) Cypress Dependent Tests Plugin
+       Basic Dependencies
+         Independent Test:
+     CypressError: Cypress detected you registered a(n) `beforeAll` hook while a test was running (possibly a hook nested inside another hook). All hooks must be registered before a test begins executing.
+Move the `beforeAll` into a suite callback or the global scope.
+      at cypressErr (http://localhost:50539/__cypress/runner/cypress_runner.js:75187:18)
+      at Object.errByPath (http://localhost:50539/__cypress/runner/cypress_runner.js:75242:10)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144921:76)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite.beforeAll (http://localhost:50539/__cypress/runner/cypress_runner.js:156848:19)
+      at Suite.<computed> [as beforeAll] (http://localhost:50539/__cypress/runner/cypress_runner.js:144929:23)
+      at before (http://localhost:50539/__cypress/runner/cypress_runner.js:160310:17)
+  From Your Spec Code:
+      at Context.eval (webpack://cypress-dependent-tests/./src/index.ts:142:4)
+  5) Cypress Dependent Tests Plugin
+       Failed Parent Test
+         Failing Parent Test:
+     CypressError: Cypress detected you registered a(n) `beforeAll` hook while a test was running (possibly a hook nested inside another hook). All hooks must be registered before a test begins executing.
+Move the `beforeAll` into a suite callback or the global scope.
+      at cypressErr (http://localhost:50539/__cypress/runner/cypress_runner.js:75187:18)
+      at Object.errByPath (http://localhost:50539/__cypress/runner/cypress_runner.js:75242:10)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144921:76)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite.beforeAll (http://localhost:50539/__cypress/runner/cypress_runner.js:156848:19)
+      at Suite.<computed> [as beforeAll] (http://localhost:50539/__cypress/runner/cypress_runner.js:144929:23)
+      at before (http://localhost:50539/__cypress/runner/cypress_runner.js:160310:17)
+  From Your Spec Code:
+      at Context.eval (webpack://cypress-dependent-tests/./src/index.ts:142:4)
+  6) Cypress Dependent Tests Plugin
+       Failed Parent Test
+         Skipped Test 1:
+     CypressError: Cypress detected you registered a(n) `beforeAll` hook while a test was running (possibly a hook nested inside another hook). All hooks must be registered before a test begins executing.
+Move the `beforeAll` into a suite callback or the global scope.
+      at cypressErr (http://localhost:50539/__cypress/runner/cypress_runner.js:75187:18)
+      at Object.errByPath (http://localhost:50539/__cypress/runner/cypress_runner.js:75242:10)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144921:76)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite.beforeAll (http://localhost:50539/__cypress/runner/cypress_runner.js:156848:19)
+      at Suite.<computed> [as beforeAll] (http://localhost:50539/__cypress/runner/cypress_runner.js:144929:23)
+      at before (http://localhost:50539/__cypress/runner/cypress_runner.js:160310:17)
+  From Your Spec Code:
+      at Context.eval (webpack://cypress-dependent-tests/./src/index.ts:142:4)
+  7) Cypress Dependent Tests Plugin
+       Failed Parent Test
+         Skipped Test 2:
+     CypressError: Cypress detected you registered a(n) `beforeAll` hook while a test was running (possibly a hook nested inside another hook). All hooks must be registered before a test begins executing.
+Move the `beforeAll` into a suite callback or the global scope.
+      at cypressErr (http://localhost:50539/__cypress/runner/cypress_runner.js:75187:18)
+      at Object.errByPath (http://localhost:50539/__cypress/runner/cypress_runner.js:75242:10)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144921:76)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite.beforeAll (http://localhost:50539/__cypress/runner/cypress_runner.js:156848:19)
+      at Suite.<computed> [as beforeAll] (http://localhost:50539/__cypress/runner/cypress_runner.js:144929:23)
+      at before (http://localhost:50539/__cypress/runner/cypress_runner.js:160310:17)
+  From Your Spec Code:
+      at Context.eval (webpack://cypress-dependent-tests/./src/index.ts:142:4)
+  8) Cypress Dependent Tests Plugin
+       Failed Parent Test
+         Still Running Test:
+     CypressError: Cypress detected you registered a(n) `beforeAll` hook while a test was running (possibly a hook nested inside another hook). All hooks must be registered before a test begins executing.
+Move the `beforeAll` into a suite callback or the global scope.
+      at cypressErr (http://localhost:50539/__cypress/runner/cypress_runner.js:75187:18)
+      at Object.errByPath (http://localhost:50539/__cypress/runner/cypress_runner.js:75242:10)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144921:76)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite.beforeAll (http://localhost:50539/__cypress/runner/cypress_runner.js:156848:19)
+      at Suite.<computed> [as beforeAll] (http://localhost:50539/__cypress/runner/cypress_runner.js:144929:23)
+      at before (http://localhost:50539/__cypress/runner/cypress_runner.js:160310:17)
+  From Your Spec Code:
+      at Context.eval (webpack://cypress-dependent-tests/./src/index.ts:142:4)
+  9) Cypress Dependent Tests Plugin
+       Complex Dependencies
+         Root Test:
+     CypressError: Cypress detected you registered a(n) `beforeAll` hook while a test was running (possibly a hook nested inside another hook). All hooks must be registered before a test begins executing.
+Move the `beforeAll` into a suite callback or the global scope.
+      at cypressErr (http://localhost:50539/__cypress/runner/cypress_runner.js:75187:18)
+      at Object.errByPath (http://localhost:50539/__cypress/runner/cypress_runner.js:75242:10)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144921:76)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite.beforeAll (http://localhost:50539/__cypress/runner/cypress_runner.js:156848:19)
+      at Suite.<computed> [as beforeAll] (http://localhost:50539/__cypress/runner/cypress_runner.js:144929:23)
+      at before (http://localhost:50539/__cypress/runner/cypress_runner.js:160310:17)
+  From Your Spec Code:
+      at Context.eval (webpack://cypress-dependent-tests/./src/index.ts:142:4)
+  10) Cypress Dependent Tests Plugin
+       Complex Dependencies
+         Level 1 Test A:
+     CypressError: Cypress detected you registered a(n) `beforeAll` hook while a test was running (possibly a hook nested inside another hook). All hooks must be registered before a test begins executing.
+Move the `beforeAll` into a suite callback or the global scope.
+      at cypressErr (http://localhost:50539/__cypress/runner/cypress_runner.js:75187:18)
+      at Object.errByPath (http://localhost:50539/__cypress/runner/cypress_runner.js:75242:10)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144921:76)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite.beforeAll (http://localhost:50539/__cypress/runner/cypress_runner.js:156848:19)
+      at Suite.<computed> [as beforeAll] (http://localhost:50539/__cypress/runner/cypress_runner.js:144929:23)
+      at before (http://localhost:50539/__cypress/runner/cypress_runner.js:160310:17)
+  From Your Spec Code:
+      at Context.eval (webpack://cypress-dependent-tests/./src/index.ts:142:4)
+  11) Cypress Dependent Tests Plugin
+       Complex Dependencies
+         Level 1 Test B:
+     CypressError: Cypress detected you registered a(n) `beforeAll` hook while a test was running (possibly a hook nested inside another hook). All hooks must be registered before a test begins executing.
+Move the `beforeAll` into a suite callback or the global scope.
+      at cypressErr (http://localhost:50539/__cypress/runner/cypress_runner.js:75187:18)
+      at Object.errByPath (http://localhost:50539/__cypress/runner/cypress_runner.js:75242:10)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144921:76)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite.beforeAll (http://localhost:50539/__cypress/runner/cypress_runner.js:156848:19)
+      at Suite.<computed> [as beforeAll] (http://localhost:50539/__cypress/runner/cypress_runner.js:144929:23)
+      at before (http://localhost:50539/__cypress/runner/cypress_runner.js:160310:17)
+  From Your Spec Code:
+      at Context.eval (webpack://cypress-dependent-tests/./src/index.ts:142:4)
+  12) Cypress Dependent Tests Plugin
+       Complex Dependencies
+         Level 2 Test:
+     CypressError: Cypress detected you registered a(n) `beforeAll` hook while a test was running (possibly a hook nested inside another hook). All hooks must be registered before a test begins executing.
+Move the `beforeAll` into a suite callback or the global scope.
+      at cypressErr (http://localhost:50539/__cypress/runner/cypress_runner.js:75187:18)
+      at Object.errByPath (http://localhost:50539/__cypress/runner/cypress_runner.js:75242:10)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144921:76)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite.beforeAll (http://localhost:50539/__cypress/runner/cypress_runner.js:156848:19)
+      at Suite.<computed> [as beforeAll] (http://localhost:50539/__cypress/runner/cypress_runner.js:144929:23)
+      at before (http://localhost:50539/__cypress/runner/cypress_runner.js:160310:17)
+  From Your Spec Code:
+      at Context.eval (webpack://cypress-dependent-tests/./src/index.ts:142:4)
+  13) Cypress Dependent Tests Plugin
+       FailFast Mode
+         Critical Test:
+     CypressError: Cypress detected you registered a(n) `beforeAll` hook while a test was running (possibly a hook nested inside another hook). All hooks must be registered before a test begins executing.
+Move the `beforeAll` into a suite callback or the global scope.
+      at cypressErr (http://localhost:50539/__cypress/runner/cypress_runner.js:75187:18)
+      at Object.errByPath (http://localhost:50539/__cypress/runner/cypress_runner.js:75242:10)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144921:76)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite.beforeAll (http://localhost:50539/__cypress/runner/cypress_runner.js:156848:19)
+      at Suite.<computed> [as beforeAll] (http://localhost:50539/__cypress/runner/cypress_runner.js:144929:23)
+      at before (http://localhost:50539/__cypress/runner/cypress_runner.js:160310:17)
+  From Your Spec Code:
+      at Context.eval (webpack://cypress-dependent-tests/./src/index.ts:142:4)
+  14) Cypress Dependent Tests Plugin
+       FailFast Mode
+         Subsequent Test 1:
+     CypressError: Cypress detected you registered a(n) `beforeAll` hook while a test was running (possibly a hook nested inside another hook). All hooks must be registered before a test begins executing.
+Move the `beforeAll` into a suite callback or the global scope.
+      at cypressErr (http://localhost:50539/__cypress/runner/cypress_runner.js:75187:18)
+      at Object.errByPath (http://localhost:50539/__cypress/runner/cypress_runner.js:75242:10)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144921:76)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite.beforeAll (http://localhost:50539/__cypress/runner/cypress_runner.js:156848:19)
+      at Suite.<computed> [as beforeAll] (http://localhost:50539/__cypress/runner/cypress_runner.js:144929:23)
+      at before (http://localhost:50539/__cypress/runner/cypress_runner.js:160310:17)
+  From Your Spec Code:
+      at Context.eval (webpack://cypress-dependent-tests/./src/index.ts:142:4)
+  15) Cypress Dependent Tests Plugin
+       FailFast Mode
+         Subsequent Test 2:
+     CypressError: Cypress detected you registered a(n) `beforeAll` hook while a test was running (possibly a hook nested inside another hook). All hooks must be registered before a test begins executing.
+Move the `beforeAll` into a suite callback or the global scope.
+      at cypressErr (http://localhost:50539/__cypress/runner/cypress_runner.js:75187:18)
+      at Object.errByPath (http://localhost:50539/__cypress/runner/cypress_runner.js:75242:10)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144921:76)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite.beforeAll (http://localhost:50539/__cypress/runner/cypress_runner.js:156848:19)
+      at Suite.<computed> [as beforeAll] (http://localhost:50539/__cypress/runner/cypress_runner.js:144929:23)
+      at before (http://localhost:50539/__cypress/runner/cypress_runner.js:160310:17)
+  From Your Spec Code:
+      at Context.eval (webpack://cypress-dependent-tests/./src/index.ts:142:4)
+  16) Cypress Dependent Tests Plugin
+       FailFast Mode
+         Subsequent Test 3:
+     CypressError: Cypress detected you registered a(n) `beforeAll` hook while a test was running (possibly a hook nested inside another hook). All hooks must be registered before a test begins executing.
+Move the `beforeAll` into a suite callback or the global scope.
+      at cypressErr (http://localhost:50539/__cypress/runner/cypress_runner.js:75187:18)
+      at Object.errByPath (http://localhost:50539/__cypress/runner/cypress_runner.js:75242:10)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144921:76)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite._createHook (http://localhost:50539/__cypress/runner/cypress_runner.js:144913:34)
+      at Suite.beforeAll (http://localhost:50539/__cypress/runner/cypress_runner.js:156848:19)
+      at Suite.<computed> [as beforeAll] (http://localhost:50539/__cypress/runner/cypress_runner.js:144929:23)
+      at before (http://localhost:50539/__cypress/runner/cypress_runner.js:160310:17)
+  From Your Spec Code:
+      at Context.eval (webpack://cypress-dependent-tests/./src/index.ts:142:4)
+  (Results)
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        16                                                                               │
+  │ Passing:      0                                                                                │
+  │ Failing:      16                                                                               │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     0 seconds                                                                        │
+  │ Spec Ran:     dependent-tests.spec.js                                                          │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+================================================================================
+  (Run Finished)
+       Spec                                              Tests  Passing  Failing  Pending  Skipped
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ ✖  dependent-tests.spec.js                  582ms       16        -       16        -        - │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+    ✖  1 of 1 failed (100%)                     582ms       16        -       16        -        -

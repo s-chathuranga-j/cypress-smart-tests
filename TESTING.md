@@ -1,6 +1,6 @@
-# Testing the cypress-dependent-tests Plugin
+# Testing the cypress-smart-tests Plugin
 
-This document provides guidance on how to test the cypress-dependent-tests plugin.
+This document provides guidance on how to test the cypress-smart-tests plugin.
 
 ## Table of Contents
 
@@ -13,7 +13,7 @@ This document provides guidance on how to test the cypress-dependent-tests plugi
 
 ## Testing Approaches
 
-There are several approaches to testing the cypress-dependent-tests plugin:
+There are several approaches to testing the cypress-smart-tests plugin:
 
 ### 1. Integration Testing (Existing Approach)
 
@@ -51,8 +51,8 @@ You can create end-to-end tests that use the plugin in real-world scenarios:
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/cypress-dependent-tests.git
-   cd cypress-dependent-tests
+   git clone https://github.com/yourusername/cypress-smart-tests.git
+   cd cypress-smart-tests
    ```
 
 2. Install dependencies:
@@ -124,7 +124,7 @@ To add unit tests:
    };
    global.afterEach = jest.fn();
 
-   describe('cypress-dependent-tests', () => {
+   describe('cypress-smart-tests', () => {
      beforeEach(() => {
        resetState();
        jest.clearAllMocks();
@@ -154,7 +154,7 @@ Here are some example test cases to consider:
 ### Basic Dependency Test
 
 ```javascript
-import { dependentIt, defineTestDependencies } from 'cypress-dependent-tests';
+import { cytest, defineTestDependencies } from 'cypress-smart-tests';
 
 describe('Login Flow', () => {
   defineTestDependencies({
@@ -162,21 +162,21 @@ describe('Login Flow', () => {
     'User can submit login form': ['User is redirected to dashboard'],
   });
 
-  dependentIt('User can visit login page', () => {
+  cytest('User can visit login page', () => {
     cy.visit('/login');
     cy.get('h1').should('contain', 'Login');
   });
 
-  dependentIt('User can enter credentials', () => {
+  cytest('User can enter credentials', () => {
     cy.get('#username').type('testuser');
     cy.get('#password').type('password');
   });
 
-  dependentIt('User can submit login form', () => {
+  cytest('User can submit login form', () => {
     cy.get('form').submit();
   });
 
-  dependentIt('User is redirected to dashboard', () => {
+  cytest('User is redirected to dashboard', () => {
     cy.url().should('include', '/dashboard');
     cy.get('h1').should('contain', 'Dashboard');
   });
@@ -186,7 +186,7 @@ describe('Login Flow', () => {
 ### Testing FailFast Mode
 
 ```javascript
-import { dependentIt, defineTestDependencies, configure } from 'cypress-dependent-tests';
+import { cytest, defineTestDependencies, configure } from 'cypress-smart-tests';
 
 describe('Shopping Cart with FailFast', () => {
   beforeEach(() => {
@@ -197,7 +197,7 @@ describe('Shopping Cart with FailFast', () => {
     'User can add item to cart': ['User can view cart', 'User can checkout'],
   });
 
-  dependentIt('User can add item to cart', () => {
+  cytest('User can add item to cart', () => {
     cy.visit('/products');
     cy.get('.product').first().click();
     cy.get('.add-to-cart').click();
@@ -205,12 +205,12 @@ describe('Shopping Cart with FailFast', () => {
     cy.get('.cart-count').should('have.text', '2'); // Expecting 2 but it's 1
   });
 
-  dependentIt('User can view cart', () => {
+  cytest('User can view cart', () => {
     cy.visit('/cart');
     cy.get('.cart-items').should('be.visible');
   });
 
-  dependentIt('User can checkout', () => {
+  cytest('User can checkout', () => {
     cy.get('.checkout-button').click();
     cy.url().should('include', '/checkout');
   });
@@ -259,7 +259,7 @@ Cypress Dependent Tests Plugin
 ### Common Issues
 
 1. **Tests not being skipped properly**
-   - Ensure that test names in `defineTestDependencies` exactly match the test names in `dependentIt`
+   - Ensure that test names in `defineTestDependencies` exactly match the test names in `cytest`
    - Check that `resetState()` is called before each test suite
 
 2. **Plugin not working in Cypress**
@@ -274,7 +274,7 @@ Cypress Dependent Tests Plugin
 
 1. Add debug logs to your tests:
    ```javascript
-   dependentIt('Test Name', () => {
+   cytest('Test Name', () => {
      cy.log(`[DEBUG] Test state: ${JSON.stringify(testState)}`);
      // Test code
    });
@@ -282,7 +282,7 @@ Cypress Dependent Tests Plugin
 
 2. Use Cypress's debug capabilities:
    ```javascript
-   dependentIt('Test Name', () => {
+   cytest('Test Name', () => {
      cy.get('.element').then($el => {
        debugger; // This will pause execution in the browser
        // Test code

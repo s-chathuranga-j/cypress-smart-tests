@@ -1,7 +1,7 @@
 {
-  "name": "cypress-dependent-tests",
+  "name": "cypress-smart-tests",
   "version": "1.0.0",
-  "description": "Cypress plugin to manage dependencies between test cases",
+  "description": "Cypress plugin for smart test execution with dependencies, conditional tests, and hooks",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -19,20 +19,24 @@
     "cypress-plugin",
     "testing",
     "dependencies",
-    "test-dependencies",
+    "dependent-tests",
+    "conditional-testing",
+    "test-hooks",
+    "smart-testing",
     "test-runner",
-    "e2e-testing"
+    "e2e-testing",
+    "test-orchestration"
   ],
-  "author": "",
+  "author": "Chathuranga Jayasinghe",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/cypress-dependent-tests.git"
+    "url": "https://github.com/yourusername/cypress-smart-tests.git"
   },
   "bugs": {
-    "url": "https://github.com/yourusername/cypress-dependent-tests/issues"
+    "url": "https://github.com/yourusername/cypress-smart-tests/issues"
   },
-  "homepage": "https://github.com/yourusername/cypress-dependent-tests#readme",
+  "homepage": "https://github.com/yourusername/cypress-smart-tests#readme",
   "peerDependencies": {
     "cypress": ">=9.0.0"
   },
