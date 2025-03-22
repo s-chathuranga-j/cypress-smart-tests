@@ -42,9 +42,6 @@ describe('Cypress Smart Tests Plugin - Dependencies', () => {
 
   context('Complex Dependent Test Execution', () => {
     beforeEach(() => {
-      // Configure failFast mode
-      configure({ failFast: true });
-
       // Define dependencies
       defineTestDependencies({
         'Critical Test': ['Subsequent Test 1', 'Subsequent Test 2'],
@@ -81,7 +78,6 @@ describe('Cypress Smart Tests Plugin - Dependencies', () => {
       cy.log('This test should be skipped in failFast mode');
       cy.wrap(true).should('be.true');
     });
-
     cytest('Subsequent Test 6', () => {
       cy.log('This test should not be skipped in failFast mode');
       cy.wrap(true).should('be.true');

@@ -99,6 +99,10 @@ Cypress.on('fail', (error, runnable) => {
  */
 export function defineTestDependencies(dependencies: TestDependencies): void {
   testDependencies = dependencies;
+  // Set fail-fast to true by default when dependent tests are defined
+  if (Object.keys(dependencies).length > 0) {
+    config.failFast = true;
+  }
 }
 
 /**
