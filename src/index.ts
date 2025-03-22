@@ -96,6 +96,14 @@ Cypress.on('fail', (error, runnable) => {
 /**
  * Define dependencies between tests
  * @param dependencies An object mapping parent tests to their dependent tests
+ * @example
+ * ```javascript
+ * // Define dependencies between tests
+ * defineTestDependencies({
+ *   'Login Test': ['View Profile Test', 'Edit Profile Test'],
+ *   'View Profile Test': ['Edit Profile Test']
+ * });
+ * ```
  */
 export function defineTestDependencies(dependencies: TestDependencies): void {
   testDependencies = dependencies;
@@ -108,6 +116,13 @@ export function defineTestDependencies(dependencies: TestDependencies): void {
 /**
  * Configure the plugin
  * @param newConfig Configuration options
+ * @example
+ * ```javascript
+ * // Configure the plugin to skip dependent tests when parent tests fail
+ * configure({
+ *   failFast: true
+ * });
+ * ```
  */
 export function configure(newConfig: Partial<PluginConfig>): void {
   config = { ...defaultConfig, ...newConfig };
@@ -115,6 +130,13 @@ export function configure(newConfig: Partial<PluginConfig>): void {
 
 /**
  * Reset the plugin state (useful for testing)
+ * @example
+ * ```javascript
+ * // Reset the plugin state before each test suite
+ * beforeEach(() => {
+ *   resetState();
+ * });
+ * ```
  */
 export function resetState(): void {
   if (typeof window !== 'undefined') {
@@ -174,6 +196,49 @@ function getDependentTests(testName: string): string[] {
  * @param name The name of the test
  * @param optionsOrFn The test options or the test function
  * @param fnOrUndefined The test function if options are provided
+ * @example
+ * ```javascript
+ * // Basic usage (similar to Cypress's it())
+ * cytest('Login Test', () => {
+ *   cy.visit('/login');
+ *   cy.get('#username').type('testuser');
+ *   cy.get('#password').type('password');
+ *   cy.get('#login-button').click();
+ *   cy.url().should('include', '/dashboard');
+ * });
+ * 
+ * // Conditional test execution
+ * cytest('Feature X Test', 
+ *   { runIf: () => Cypress.env('ENABLE_FEATURE_X') === true }, 
+ *   () => {
+ *     cy.log('Testing Feature X');
+ *     cy.visit('/feature-x');
+ *     cy.get('.feature-x-element').should('be.visible');
+ *   }
+ * );
+ * 
+ * // Test with setup and cleanup hooks
+ * cytest('User Profile Test', {
+ *   before: () => {
+ *     cy.log('Setting up test data');
+ *     cy.request('POST', '/api/users', { name: 'Test User' })
+ *       .then(response => {
+ *         cy.wrap(response.body).as('testUser');
+ *       });
+ *   },
+ *   after: () => {
+ *     cy.log('Cleaning up test data');
+ *     cy.get('@testUser').then(user => {
+ *       cy.request('DELETE', `/api/users/${user.id}`);
+ *     });
+ *   }
+ * }, () => {
+ *   cy.get('@testUser').then(user => {
+ *     cy.visit(`/users/${user.id}`);
+ *     cy.get('.user-name').should('contain', user.name);
+ *   });
+ * });
+ * ```
  */
 export function cytest(
   name: string, 
@@ -237,6 +302,25 @@ export function cytest(
  * @param name The name of the test
  * @param optionsOrFn The test options or the test function
  * @param fnOrUndefined The test function if options are provided
+ * @example
+ * ```javascript
+ * // Skip a test (useful during development or when a test is temporarily broken)
+ * cytest.skip('Feature that is not ready yet', () => {
+ *   cy.visit('/feature-in-progress');
+ *   cy.get('.not-implemented-yet').should('be.visible');
+ * });
+ * 
+ * // Skip a test with options
+ * cytest.skip('Advanced feature test', 
+ *   { 
+ *     runIf: () => Cypress.env('ENVIRONMENT') === 'production',
+ *     before: () => cy.log('This setup will not run')
+ *   }, 
+ *   () => {
+ *     cy.log('This test is skipped');
+ *   }
+ * );
+ * ```
  */
 cytest.skip = function(
   name: string, 
@@ -257,6 +341,27 @@ cytest.skip = function(
  * @param name The name of the test
  * @param optionsOrFn The test options or the test function
  * @param fnOrUndefined The test function if options are provided
+ * @example
+ * ```javascript
+ * // Run only this test (useful during development or debugging)
+ * cytest.only('Test I am currently working on', () => {
+ *   cy.visit('/feature');
+ *   cy.get('.specific-element').should('be.visible');
+ * });
+ * 
+ * // Run only this test with options
+ * cytest.only('Specific conditional test', 
+ *   { 
+ *     runIf: () => Cypress.env('DEBUG_MODE') === true,
+ *     before: () => cy.log('Setting up for debugging')
+ *   }, 
+ *   () => {
+ *     cy.log('Debugging specific feature');
+ *     cy.visit('/feature-being-debugged');
+ *     cy.get('.debug-element').should('be.visible');
+ *   }
+ * );
+ * ```
  */
 cytest.only = function(
   name: string, 
