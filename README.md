@@ -1,15 +1,26 @@
 # cypress-smart-tests
 
-A Cypress plugin for smart test execution with dependencies, conditional tests, and hooks. It allows you to define dependencies between test cases, conditionally run tests based on environment variables or other factors, and add custom setup/cleanup hooks to individual tests.
+![Version](https://img.shields.io/badge/version-1.0.1-blue.svg)
+![License](https://img.shields.io/badge/license-MIT-green.svg)
 
-## Features
+A powerful Cypress plugin that enhances your test suite with smart execution capabilities:
+- **Dependent Tests**: Define dependencies between test cases and automatically skip dependent tests when parent tests fail
+- **Conditional Tests**: Run tests only when specific conditions are met (environment variables, feature flags, browser type, etc.)
+- **Test-specific Hooks**: Add custom setup and cleanup code to individual tests
 
-- Define dependencies between test cases
-- Automatically skip dependent tests if the parent test fails with fail-fast option
-- Selectively execute tests based on environment variables, feature flags, or other conditions
-- Add custom before/after hooks to individual tests for setup and cleanup
-- Clear console output showing what was skipped and why
-- Easy-to-use API with minimal intrusion
+## Table of Contents
+
+- [Installation](#-installation)
+- [Quick Start](#-quick-start)
+- [Features](#-features)
+  - [Test Dependencies](#test-dependencies)
+  - [Conditional Test Execution](#conditional-test-execution)
+  - [Test-specific Hooks](#test-specific-hooks)
+- [API Reference](#-api-reference)
+- [Examples](#-examples)
+- [TypeScript Support](#-typescript-support)
+- [Contributing](#-contributing)
+- [License](#-license)
 
 ## Installation
 
@@ -17,52 +28,190 @@ A Cypress plugin for smart test execution with dependencies, conditional tests, 
 npm install --save-dev cypress-smart-tests
 ```
 
-## Usage
+## Quick Start
 
-### Basic Usage
+```javascript
+import { cytest, defineTestDependencies, configure } from 'cypress-smart-tests';
+
+// Define dependencies between tests
+defineTestDependencies({
+  'Login Test': ['View Profile Test', 'Edit Profile Test'],
+});
+
+describe('User Management', () => {
+  // Use cytest instead of it
+  cytest('Login Test', () => {
+    cy.visit('/login');
+    cy.get('#username').type('testuser');
+    cy.get('#password').type('password');
+    cy.get('#login-button').click();
+    cy.url().should('include', '/dashboard');
+  });
+
+  // This test will be skipped if 'Login Test' fails
+  cytest('View Profile Test', () => {
+    cy.get('#profile-link').click();
+    cy.url().should('include', '/profile');
+  });
+
+  // This test will be skipped if 'Login Test' fails
+  cytest('Edit Profile Test', () => {
+    cy.get('#profile-link').click();
+    cy.get('#edit-button').click();
+    cy.get('#name').clear().type('New Name');
+    cy.get('#save-button').click();
+    cy.get('.success-message').should('be.visible');
+  });
+
+  // This test will run regardless of other test results
+  cytest('Independent Test', () => {
+    cy.visit('/about');
+    cy.get('h1').should('contain', 'About Us');
+  });
+});
+```
+
+## Features
+
+### Test Dependencies
+
+Define dependencies between tests and automatically skip dependent tests when parent tests fail.
 
 ```javascript
 import { cytest, defineTestDependencies } from 'cypress-smart-tests';
 
-// Define dependencies between tests
+// Define dependencies
 defineTestDependencies({
-  'Test 1': ['Test 2', 'Test 3'], // if Test 1 fails, skip Test 2 & 3
+  'Parent Test': ['Child Test 1', 'Child Test 2'],
+  'Child Test 1': ['Grandchild Test'],
 });
 
-describe('Dependent Test Suite', () => {
-  cytest('Test 1', () => {
-    cy.visit('https://example.com');
-    cy.get('h1').should('contain', 'Example Domain');
+describe('Dependent Tests', () => {
+  cytest('Parent Test', () => {
+    // If this test fails, 'Child Test 1', 'Child Test 2', and 'Grandchild Test' will be skipped
+    cy.wrap(true).should('be.true');
   });
 
-  cytest('Test 2', () => {
-    cy.log('This will be skipped if Test 1 fails');
+  cytest('Child Test 1', () => {
+    // If this test fails, 'Grandchild Test' will be skipped
+    cy.wrap(true).should('be.true');
   });
 
-  cytest('Test 3', () => {
-    cy.log('Also skipped if Test 1 fails');
+  cytest('Child Test 2', () => {
+    cy.wrap(true).should('be.true');
+  });
+
+  cytest('Grandchild Test', () => {
+    cy.wrap(true).should('be.true');
   });
 
   cytest('Independent Test', () => {
-    cy.log('This will run regardless');
+    // This test will run regardless of other test results
+    cy.wrap(true).should('be.true');
   });
 });
 ```
 
-### Configuration
+### Conditional Test Execution
 
-You can configure the plugin with the `configure` function:
+Run tests only when specific conditions are met.
 
 ```javascript
-import { configure } from 'cypress-smart-tests';
+import { cytest } from 'cypress-smart-tests';
 
-// Configure the plugin
-configure({
-  failFast: true, // Stop execution after any parent failure
+describe('Conditional Tests', () => {
+  // Test that runs only when a feature flag is enabled
+  cytest('Feature X Test', 
+    { runIf: () => Cypress.env('ENABLE_FEATURE_X') === true }, 
+    () => {
+      cy.log('Testing Feature X');
+      cy.visit('/feature-x');
+      cy.get('.feature-x-element').should('be.visible');
+    }
+  );
+
+  // Test that runs only in Chrome
+  cytest('Chrome-only Test', 
+    { runIf: () => Cypress.browser.name === 'chrome' }, 
+    () => {
+      cy.log('This test only runs in Chrome');
+      cy.visit('/browser-specific');
+      cy.get('.chrome-element').should('be.visible');
+    }
+  );
+
+  // Test that runs only on mobile viewports
+  cytest('Mobile Layout Test', 
+    { runIf: () => {
+      const viewportWidth = Cypress.config('viewportWidth');
+      return viewportWidth < 768; // Only run on mobile viewports
+    }}, 
+    () => {
+      cy.log('Testing mobile layout');
+      cy.visit('/responsive');
+      cy.get('.mobile-menu').should('be.visible');
+    }
+  );
 });
 ```
 
-## API
+### Test-specific Hooks
+
+Add custom setup and cleanup code to individual tests.
+
+```javascript
+import { cytest } from 'cypress-smart-tests';
+
+describe('Tests with Hooks', () => {
+  // Test with setup and cleanup
+  cytest('User Profile Test', {
+    before: () => {
+      cy.log('Setting up test data');
+      // Create a test user
+      cy.request('POST', '/api/users', {
+        name: 'Test User',
+        email: 'test@example.com'
+      }).then(response => {
+        cy.wrap(response.body).as('testUser');
+      });
+    },
+    after: () => {
+      cy.log('Cleaning up test data');
+      // Delete the test user
+      cy.get('@testUser').then(user => {
+        cy.request('DELETE', `/api/users/${user.id}`);
+      });
+    }
+  }, () => {
+    // Test logic
+    cy.get('@testUser').then(user => {
+      cy.visit(`/users/${user.id}`);
+      cy.get('.user-name').should('contain', user.name);
+    });
+  });
+
+  // Combine hooks with conditional execution
+  cytest('Admin Feature Test', {
+    runIf: () => Cypress.env('TEST_ADMIN_FEATURES') === true,
+    before: () => {
+      cy.log('Setting up admin user');
+      cy.request('POST', '/api/login', {
+        username: 'admin',
+        password: Cypress.env('ADMIN_PASSWORD')
+      });
+    },
+    after: () => {
+      cy.log('Logging out admin user');
+      cy.request('POST', '/api/logout');
+    }
+  }, () => {
+    cy.visit('/admin/dashboard');
+    cy.get('.admin-panel').should('be.visible');
+  });
+});
+```
+
+## 📚 API Reference
 
 ### `cytest(name, options, fn)` or `cytest(name, fn)`
 
@@ -86,13 +235,13 @@ Define dependencies between tests.
 Configure the plugin.
 
 - `config` (object): Configuration options
-  - `failFast` (boolean): If true, stop execution after any parent failure
+  - `failFast` (boolean): If true, skip dependent tests when parent tests fail
 
 ### `resetState()`
 
-Reset the plugin state
+Reset the plugin state. Useful in `beforeEach` hooks to ensure a clean state for each test suite.
 
-## Examples
+## 🧪 Examples
 
 ### Complex Dependencies
 
@@ -107,139 +256,151 @@ defineTestDependencies({
 
 describe('User Management', () => {
   cytest('Login', () => {
-    // Login test
+    // Login test logic
+    cy.visit('/login');
+    cy.get('#username').type('testuser');
+    cy.get('#password').type('password');
+    cy.get('#login-button').click();
+    cy.url().should('include', '/dashboard');
   });
 
   cytest('View Profile', () => {
-    // View profile test
+    // View profile test logic
+    cy.get('#profile-link').click();
+    cy.url().should('include', '/profile');
   });
 
   cytest('Edit Profile', () => {
-    // Edit profile test
+    // Edit profile test logic
+    cy.get('#profile-link').click();
+    cy.get('#edit-button').click();
+    cy.get('#name').clear().type('New Name');
+    cy.get('#save-button').click();
+    cy.get('.success-message').should('be.visible');
   });
 
   cytest('Logout', () => {
-    // Logout test
+    // Logout test logic
+    cy.get('#logout-button').click();
+    cy.url().should('include', '/login');
   });
 });
 ```
 
-### Conditional Execution
-
-You can use the `runIf` option to conditionally run tests based on environment variables, feature flags, or other conditions:
+### Advanced Conditional Tests
 
 ```javascript
 import { cytest } from 'cypress-smart-tests';
 
-describe('Feature Tests', () => {
-  // Set environment variables in cypress.config.js or via command line
-  // e.g., cypress run --env ENABLE_FEATURE_X=true
-
-  // Test that only runs when ENABLE_FEATURE_X is true
-  cytest('Feature X Test', 
-    { runIf: () => Cypress.env('ENABLE_FEATURE_X') }, 
-    () => {
-      cy.log('Testing Feature X');
-      // Test code here
-    }
-  );
-
-  // Test with dynamic condition based on browser
-  cytest('Chrome-only Test', 
-    { runIf: () => Cypress.browser.name === 'chrome' }, 
-    () => {
-      cy.log('This test only runs in Chrome');
-      // Test code here
-    }
-  );
-
-  // You can use any logic in the runIf function
-  cytest('Mobile viewport Test', 
+describe('Advanced Conditional Tests', () => {
+  // Test that runs based on multiple conditions
+  cytest('Premium Feature Test', 
     { runIf: () => {
-      const viewportWidth = Cypress.config('viewportWidth');
-      return viewportWidth < 768; // Only run on mobile viewports
+      // Only run this test if:
+      // 1. We're testing premium features
+      // 2. We're in a specific environment
+      // 3. We're using a specific browser
+      return Cypress.env('TEST_PREMIUM_FEATURES') === true &&
+             Cypress.env('ENVIRONMENT') === 'staging' &&
+             Cypress.browser.name === 'chrome';
     }}, 
     () => {
-      cy.log('Testing mobile layout');
-      // Test code here
+      cy.log('Testing premium features in staging on Chrome');
+      cy.visit('/premium-features');
+      cy.get('.premium-content').should('be.visible');
+    }
+  );
+
+  // Test with dynamic data-driven condition
+  cytest('Data-driven Conditional Test', 
+    { runIf: () => {
+      // Fetch some data and decide whether to run the test
+      return cy.request('/api/feature-config')
+        .then(response => {
+          return response.body.enableNewFeature === true;
+        });
+    }}, 
+    () => {
+      cy.log('Testing new feature that is enabled in the config');
+      cy.visit('/new-feature');
+      cy.get('.new-feature-element').should('be.visible');
     }
   );
 });
 ```
 
-### Using Test Hooks
-
-You can use the `before` and `after` hooks to run setup and cleanup code for individual tests:
+### Combining All Features
 
 ```javascript
-import { cytest } from 'cypress-smart-tests';
-
-describe('Tests with Hooks', () => {
-  // Test with setup and cleanup
-  cytest('Test with cleanup', {
-    before: () => {
-      cy.log('Setting up test environment');
-      // Create test data or set up environment
-      cy.exec('echo "Setup complete" > setup.txt');
-    },
-    after: () => {
-      cy.log('Cleaning up test environment');
-      // Clean up test data or environment
-      cy.exec('rm setup.txt');
-    }
-  }, () => {
-    // Test logic
-    cy.exec('cat setup.txt').its('stdout').should('contain', 'Setup complete');
-  });
-
-  // Combine hooks with conditional execution
-  cytest('Test with hooks and conditions', {
-    runIf: () => Cypress.env('RUN_CLEANUP_TESTS') === true,
-    before: () => cy.log('Running setup for conditional test'),
-    after: () => cy.log('Running cleanup for conditional test')
-  }, () => {
-    // Test logic that only runs when the condition is met
-    cy.log('Test with both hooks and conditions');
-  });
-});
-```
-
-### Using with TypeScript
-
-The plugin is written in TypeScript and includes type definitions.
-
-```typescript
 import { cytest, defineTestDependencies, configure } from 'cypress-smart-tests';
 
-// Type-safe configuration
+// Configure the plugin
 configure({
   failFast: true,
 });
 
-// Type-safe dependencies
+// Define dependencies
 defineTestDependencies({
-  'Test 1': ['Test 2', 'Test 3'],
+  'Setup': ['Feature A Test', 'Feature B Test'],
+});
+
+describe('Combined Features', () => {
+  cytest('Setup', {
+    before: () => {
+      cy.log('Global setup for all dependent tests');
+      cy.request('POST', '/api/reset-test-data');
+    },
+    after: () => {
+      cy.log('Global cleanup after all dependent tests');
+      cy.request('POST', '/api/cleanup');
+    }
+  }, () => {
+    cy.visit('/');
+    cy.get('.welcome-message').should('be.visible');
+  });
+
+  cytest('Feature A Test', {
+    runIf: () => Cypress.env('ENABLE_FEATURE_A') === true,
+    before: () => {
+      cy.log('Setting up Feature A test');
+      cy.request('POST', '/api/features/a/enable');
+    },
+    after: () => {
+      cy.log('Cleaning up Feature A test');
+      cy.request('POST', '/api/features/a/disable');
+    }
+  }, () => {
+    cy.visit('/feature-a');
+    cy.get('.feature-a-element').should('be.visible');
+  });
+
+  cytest('Feature B Test', {
+    runIf: () => Cypress.env('ENABLE_FEATURE_B') === true,
+    before: () => {
+      cy.log('Setting up Feature B test');
+      cy.request('POST', '/api/features/b/enable');
+    },
+    after: () => {
+      cy.log('Cleaning up Feature B test');
+      cy.request('POST', '/api/features/b/disable');
+    }
+  }, () => {
+    cy.visit('/feature-b');
+    cy.get('.feature-b-element').should('be.visible');
+  });
 });
 ```
 
-## License
-
-MIT
-
-## Contributing and Publishing
-
-### Contributing
+## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-### Publishing
+1. Fork the repository
+2. Create your feature branch: `git checkout -b feature/amazing-feature`
+3. Commit your changes: `git commit -m 'Add some amazing feature'`
+4. Push to the branch: `git push origin feature/amazing-feature`
+5. Open a Pull Request
 
-To publish this package to npm:
+## License
 
-1. Update the repository URL in package.json to your actual repository.
-2. Update the author field in package.json with your name and email.
-3. Make sure the package name is set to 'cypress-smart-tests'.
-4. Build the package: `npm run build`
-5. Test the package: `npm test`
-6. Login to npm: `npm login`
-7. Publish the package: `npm publish`
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
