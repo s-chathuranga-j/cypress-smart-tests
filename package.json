@@ -1,6 +1,6 @@
 {
   "name": "cypress-smart-tests",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Cypress plugin for smart test execution with dependencies, conditional tests, and hooks",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
