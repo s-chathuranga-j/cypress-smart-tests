@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2025-03-25
+
+### Added
+- Added persistent variables functionality with `cyVariable()` and `cyVariables()` functions
+- `cyVariable(name, value?)` for getting and setting individual variables that persist across tests
+- `cyVariables()` for managing multiple variables with methods like `add()`, `get()`, `has()`, `remove()`, `getAll()`, and `clear()`
+- Enhanced `resetState()` function with optional parameter to reset variables
+- Added comprehensive tests for the new variables functionality
+
+### Changed
+- Major version upgrade due to new feature addition
+
 ## [1.0.2] - 2025-03-22
 
 ### Added

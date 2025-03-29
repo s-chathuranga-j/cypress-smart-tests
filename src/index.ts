@@ -5,17 +5,19 @@
 
 /// <reference types="cypress" />
 
-// Global variable to track failed tests
-// This needs to be accessible from the window object so it persists between test runs
+// Global variables to track failed tests and persistent variables
+// These need to be accessible from the window object so they persist between test runs
 declare global {
   interface Window {
     failedTests: string[];
+    cyVariablesStore: Record<string, any>;
   }
 }
 
-// Initialize the global variable
+// Initialize the global variables
 if (typeof window !== 'undefined') {
   window.failedTests = window.failedTests || [];
+  window.cyVariablesStore = window.cyVariablesStore || {};
 }
 
 interface TestDependencies {
@@ -130,20 +132,175 @@ export function configure(newConfig: Partial<PluginConfig>): void {
 
 /**
  * Reset the plugin state (useful for testing)
+ * @param {boolean} [resetVariables=false] - If true, also reset the persistent variables
  * @example
  * ```javascript
  * // Reset the plugin state before each test suite
  * beforeEach(() => {
  *   resetState();
  * });
+ * 
+ * // Reset the plugin state including persistent variables
+ * beforeEach(() => {
+ *   resetState(true);
+ * });
  * ```
  */
-export function resetState(): void {
+export function resetState(resetVariables: boolean = false): void {
   if (typeof window !== 'undefined') {
     window.failedTests = [];
+    if (resetVariables) {
+      window.cyVariablesStore = {};
+    }
   }
   testDependencies = {};
   config = { ...defaultConfig };
+}
+
+/**
+ * Get or set a persistent variable that doesn't reset across tests
+ * @param {string} name - The name of the variable
+ * @param {any} [value] - The value to set (if provided)
+ * @returns {any} The current value of the variable, or a function to get/set the variable
+ * @example
+ * ```javascript
+ * // Set a variable
+ * cyVariable('username', 'testuser');
+ * 
+ * // Get a variable
+ * const username = cyVariable('username');
+ * cy.log(`Current username: ${username}`);
+ * 
+ * // Update a variable
+ * cyVariable('username', 'newuser');
+ * 
+ * // Use in a test
+ * cytest('User Profile Test', () => {
+ *   const username = cyVariable('username');
+ *   cy.visit(`/users/${username}`);
+ *   cy.get('.user-name').should('contain', username);
+ * });
+ * ```
+ */
+export function cyVariable(name: string, value?: any): any {
+  if (typeof window === 'undefined') {
+    return undefined;
+  }
+
+  // If value is provided, set the variable
+  if (arguments.length > 1) {
+    window.cyVariablesStore[name] = value;
+  }
+
+  // Return the current value
+  return window.cyVariablesStore[name];
+}
+
+/**
+ * Manage multiple persistent variables that don't reset across tests
+ * @returns {object} An object with methods to manage variables
+ * @example
+ * ```javascript
+ * // Add variables
+ * cyVariables().add('username', 'testuser');
+ * cyVariables().add('userId', 123);
+ * cyVariables().add('userPreferences', { theme: 'dark', language: 'en' });
+ * 
+ * // Get variables
+ * const username = cyVariables().get('username');
+ * const userId = cyVariables().get('userId');
+ * const userPreferences = cyVariables().get('userPreferences');
+ * 
+ * // Check if a variable exists
+ * if (cyVariables().has('username')) {
+ *   cy.log('Username is set');
+ * }
+ * 
+ * // Get all variables
+ * const allVariables = cyVariables().getAll();
+ * cy.log(`All variables: ${JSON.stringify(allVariables)}`);
+ * 
+ * // Remove a variable
+ * cyVariables().remove('username');
+ * 
+ * // Clear all variables
+ * cyVariables().clear();
+ * ```
+ */
+export function cyVariables(): {
+  add: (name: string, value: any) => void;
+  get: (name: string) => any;
+  has: (name: string) => boolean;
+  remove: (name: string) => void;
+  getAll: () => Record<string, any>;
+  clear: () => void;
+} {
+  return {
+    /**
+     * Add or update a variable
+     * @param {string} name - The name of the variable
+     * @param {any} value - The value to set
+     */
+    add: (name: string, value: any): void => {
+      if (typeof window !== 'undefined') {
+        window.cyVariablesStore[name] = value;
+      }
+    },
+
+    /**
+     * Get a variable
+     * @param {string} name - The name of the variable
+     * @returns {any} The value of the variable
+     */
+    get: (name: string): any => {
+      if (typeof window === 'undefined') {
+        return undefined;
+      }
+      return window.cyVariablesStore[name];
+    },
+
+    /**
+     * Check if a variable exists
+     * @param {string} name - The name of the variable
+     * @returns {boolean} True if the variable exists, false otherwise
+     */
+    has: (name: string): boolean => {
+      if (typeof window === 'undefined') {
+        return false;
+      }
+      return name in window.cyVariablesStore;
+    },
+
+    /**
+     * Remove a variable
+     * @param {string} name - The name of the variable
+     */
+    remove: (name: string): void => {
+      if (typeof window !== 'undefined') {
+        delete window.cyVariablesStore[name];
+      }
+    },
+
+    /**
+     * Get all variables
+     * @returns {Record<string, any>} All variables
+     */
+    getAll: (): Record<string, any> => {
+      if (typeof window === 'undefined') {
+        return {};
+      }
+      return { ...window.cyVariablesStore };
+    },
+
+    /**
+     * Clear all variables
+     */
+    clear: (): void => {
+      if (typeof window !== 'undefined') {
+        window.cyVariablesStore = {};
+      }
+    }
+  };
 }
 
 /**

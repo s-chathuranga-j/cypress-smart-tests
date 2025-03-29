@@ -1,12 +1,13 @@
 # cypress-smart-tests
 
-![Version](https://img.shields.io/badge/version-1.0.2-blue.svg)
+![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
 A powerful Cypress plugin that enhances your test suite with smart execution capabilities:
 - **Dependent Tests**: Define dependencies between test cases and automatically skip dependent tests when parent tests fail
 - **Conditional Tests**: Run tests only when specific conditions are met (environment variables, feature flags, browser type, etc.)
 - **Test-specific Hooks**: Add custom setup and cleanup code to individual tests
+- **Persistent Variables**: Share variables across tests without resetting between test runs
 
 ## Table of Contents
 
@@ -16,6 +17,7 @@ A powerful Cypress plugin that enhances your test suite with smart execution cap
   - [Test Dependencies](#test-dependencies)
   - [Conditional Test Execution](#conditional-test-execution)
   - [Test-specific Hooks](#test-specific-hooks)
+  - [Persistent Variables](#persistent-variables)
 - [API Reference](#-api-reference)
 - [Examples](#-examples)
 - [TypeScript Support](#-typescript-support)
@@ -211,6 +213,69 @@ describe('Tests with Hooks', () => {
 });
 ```
 
+### Persistent Variables
+
+Share variables across tests without resetting between test runs.
+
+```javascript
+import { cytest, cyVariable, cyVariables } from 'cypress-smart-tests';
+
+describe('User Management with Persistent Variables', () => {
+  // Set up variables before tests
+  before(() => {
+    // Simple variable
+    cyVariable('username', 'testuser');
+
+    // Complex variable
+    cyVariables().add('userCredentials', {
+      username: 'admin',
+      password: 'password123'
+    });
+  });
+
+  cytest('Login Test', () => {
+    // Get variables set in the before hook
+    const username = cyVariable('username');
+    const credentials = cyVariables().get('userCredentials');
+
+    cy.visit('/login');
+    cy.get('#username').type(credentials.username);
+    cy.get('#password').type(credentials.password);
+    cy.get('#login-button').click();
+
+    // Store the user ID for use in later tests
+    cy.url().should('include', '/dashboard');
+    cy.get('[data-user-id]').invoke('attr', 'data-user-id').then(userId => {
+      cyVariable('userId', userId);
+    });
+  });
+
+  cytest('Profile Test', () => {
+    // Variables persist across tests
+    const userId = cyVariable('userId');
+
+    // This test will use the userId from the previous test
+    cy.visit(`/users/${userId}/profile`);
+    cy.get('.profile-name').should('be.visible');
+
+    // Update a variable
+    cyVariable('lastVisitedPage', 'profile');
+  });
+
+  cytest('Logout Test', () => {
+    // Get the last visited page
+    const lastPage = cyVariable('lastVisitedPage');
+    cy.log(`Last visited page: ${lastPage}`);
+
+    // Clear specific variables when done
+    cyVariables().remove('userId');
+
+    // Or clear all variables
+    // cyVariables().clear();
+  });
+});
+```
+
 ## 📚 API Reference
 
 ### `cytest(name, options, fn)` or `cytest(name, fn)`
@@ -237,9 +302,31 @@ Configure the plugin.
 - `config` (object): Configuration options
   - `failFast` (boolean): If true, skip dependent tests when parent tests fail
 
-### `resetState()`
+### `resetState(resetVariables?)`
 
 Reset the plugin state. Useful in `beforeEach` hooks to ensure a clean state for each test suite.
+
+- `resetVariables` (boolean) [optional]: If true, also reset the persistent variables
+
+### `cyVariable(name, value?)`
+
+Get or set a persistent variable that doesn't reset across tests.
+
+- `name` (string): The name of the variable
+- `value` (any) [optional]: The value to set (if provided)
+- Returns: The current value of the variable
+
+### `cyVariables()`
+
+Manage multiple persistent variables that don't reset across tests.
+
+- Returns: An object with the following methods:
+  - `add(name, value)`: Add or update a variable
+  - `get(name)`: Get a variable
+  - `has(name)`: Check if a variable exists
+  - `remove(name)`: Remove a variable
+  - `getAll()`: Get all variables
+  - `clear()`: Clear all variables
 
 ## 🧪 Examples
 
@@ -329,10 +416,139 @@ describe('Advanced Conditional Tests', () => {
 });
 ```
 
+### Advanced Persistent Variables
+
+```javascript
+import { cytest, cyVariable, cyVariables, resetState } from 'cypress-smart-tests';
+
+describe('E-commerce Checkout Flow with Persistent Variables', () => {
+  before(() => {
+    // Reset variables at the start of the suite
+    resetState(true);
+
+    // Set up initial test data
+    cyVariables().add('testProducts', [
+      { id: 'p1', name: 'Product 1', price: 10.99 },
+      { id: 'p2', name: 'Product 2', price: 24.99 },
+      { id: 'p3', name: 'Product 3', price: 5.99 }
+    ]);
+
+    cyVariables().add('cart', []);
+    cyVariables().add('user', null);
+  });
+
+  cytest('User Registration', () => {
+    cy.visit('/register');
+
+    // Generate a unique email
+    const email = `test-${Date.now()}@example.com`;
+    const user = {
+      email: email,
+      name: 'Test User',
+      address: '123 Test St'
+    };
+
+    // Fill registration form
+    cy.get('#name').type(user.name);
+    cy.get('#email').type(user.email);
+    cy.get('#address').type(user.address);
+    cy.get('#password').type('password123');
+    cy.get('#register-button').click();
+
+    // Store user data for later tests
+    cy.url().should('include', '/account');
+    cy.get('[data-user-id]').invoke('attr', 'data-user-id').then(userId => {
+      user.id = userId;
+      cyVariables().add('user', user);
+    });
+  });
+
+  cytest('Add Products to Cart', () => {
+    // Get user and products from previous test
+    const user = cyVariables().get('user');
+    const products = cyVariables().get('testProducts');
+
+    cy.log(`Shopping as user: ${user.name}`);
+    cy.visit('/products');
+
+    // Add first two products to cart
+    const cart = [];
+    cy.get(`[data-product-id="${products[0].id}"]`).find('.add-to-cart').click();
+    cart.push(products[0]);
+
+    cy.get(`[data-product-id="${products[1].id}"]`).find('.add-to-cart').click();
+    cart.push(products[1]);
+
+    // Store cart for later tests
+    cyVariables().add('cart', cart);
+
+    // Verify cart count
+    cy.get('.cart-count').should('contain', '2');
+  });
+
+  cytest('Checkout Process', () => {
+    // Get user and cart from previous tests
+    const user = cyVariables().get('user');
+    const cart = cyVariables().get('cart');
+
+    // Calculate total price
+    const totalPrice = cart.reduce((sum, product) => sum + product.price, 0);
+
+    cy.log(`Checking out with ${cart.length} items for $${totalPrice.toFixed(2)}`);
+    cy.visit('/cart');
+
+    // Verify cart contents
+    cy.get('.cart-items .item').should('have.length', cart.length);
+
+    // Proceed to checkout
+    cy.get('#checkout-button').click();
+
+    // Verify user info is pre-filled
+    cy.get('#checkout-name').should('have.value', user.name);
+    cy.get('#checkout-email').should('have.value', user.email);
+    cy.get('#checkout-address').should('have.value', user.address);
+
+    // Complete order
+    cy.get('#place-order-button').click();
+
+    // Store order info
+    cy.get('.order-confirmation').invoke('attr', 'data-order-id').then(orderId => {
+      cyVariable('lastOrderId', orderId);
+    });
+
+    // Clear cart after successful order
+    cyVariables().add('cart', []);
+  });
+
+  cytest('Order Confirmation', () => {
+    // Get order ID from previous test
+    const orderId = cyVariable('lastOrderId');
+    const user = cyVariables().get('user');
+
+    cy.log(`Checking order confirmation for order: ${orderId}`);
+    cy.visit(`/orders/${orderId}`);
+
+    // Verify order details
+    cy.get('.order-id').should('contain', orderId);
+    cy.get('.order-customer').should('contain', user.name);
+
+    // Store order history
+    const orderHistory = cyVariables().has('orderHistory') 
+      ? cyVariables().get('orderHistory') 
+      : [];
+
+    orderHistory.push(orderId);
+    cyVariables().add('orderHistory', orderHistory);
+
+    cy.log(`User now has ${orderHistory.length} orders in history`);
+  });
+});
+```
+
 ### Combining All Features
 
 ```javascript
-import { cytest, defineTestDependencies, configure } from 'cypress-smart-tests';
+import { cytest, cyVariable, cyVariables, defineTestDependencies, configure } from 'cypress-smart-tests';
 
 // Configure the plugin
 configure({
@@ -345,6 +561,11 @@ defineTestDependencies({
 });
 
 describe('Combined Features', () => {
+  before(() => {
+    // Initialize persistent variables
+    cyVariable('setupComplete', false);
+  });
+
   cytest('Setup', {
     before: () => {
       cy.log('Global setup for all dependent tests');
@@ -353,6 +574,9 @@ describe('Combined Features', () => {
     after: () => {
       cy.log('Global cleanup after all dependent tests');
       cy.request('POST', '/api/cleanup');
+
+      // Mark setup as complete for other tests
+      cyVariable('setupComplete', true);
     }
   }, () => {
     cy.visit('/');
@@ -364,6 +588,9 @@ describe('Combined Features', () => {
     before: () => {
       cy.log('Setting up Feature A test');
       cy.request('POST', '/api/features/a/enable');
+
+      // Store feature-specific data
+      cyVariables().add('featureAData', { enabled: true, timestamp: Date.now() });
     },
     after: () => {
       cy.log('Cleaning up Feature A test');
@@ -372,11 +599,18 @@ describe('Combined Features', () => {
   }, () => {
     cy.visit('/feature-a');
     cy.get('.feature-a-element').should('be.visible');
+
+    // Store test result
+    cyVariable('featureATested', true);
   });
 
   cytest('Feature B Test', {
     runIf: () => Cypress.env('ENABLE_FEATURE_B') === true,
     before: () => {
+      // Check if setup is complete
+      const setupComplete = cyVariable('setupComplete');
+      cy.log(`Setup complete: ${setupComplete}`);
+
       cy.log('Setting up Feature B test');
       cy.request('POST', '/api/features/b/enable');
     },
@@ -385,6 +619,10 @@ describe('Combined Features', () => {
       cy.request('POST', '/api/features/b/disable');
     }
   }, () => {
+    // Check if Feature A was tested
+    const featureATested = cyVariable('featureATested');
+    cy.log(`Feature A was tested: ${featureATested}`);
+
     cy.visit('/feature-b');
     cy.get('.feature-b-element').should('be.visible');
   });
