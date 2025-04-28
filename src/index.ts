@@ -410,6 +410,7 @@ export function cytest(
   // Use regular Cypress it() function
   // Pass tags to the underlying it function for cypress-grep compatibility
   const itOptions = options.tags ? { tags: options.tags } : undefined;
+  // @ts-ignore
   return it(name, itOptions, function() {
     // Check if grepTags is defined and if this test's tags match
     const grepTags = Cypress.env('grepTags');
@@ -522,6 +523,7 @@ cytest.skip = function(
   const itOptions = options.tags ? { tags: options.tags } : undefined;
 
   // For skip, we don't need to check grepTags since the test is already being skipped
+  // @ts-ignore
   return it.skip(name, itOptions, fn as any);
 };
 
@@ -563,6 +565,7 @@ cytest.only = function(
 
   // Pass tags to the underlying it.only function for cypress-grep compatibility
   const itOptions = options.tags ? { tags: options.tags } : undefined;
+  // @ts-ignore
   return it.only(name, itOptions, function() {
     // Check if grepTags is defined and if this test's tags match
     const grepTags = Cypress.env('grepTags');
