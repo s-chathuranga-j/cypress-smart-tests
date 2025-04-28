@@ -29,6 +29,7 @@ interface CytestOptions {
   runIf?: () => boolean; // Function that returns true if the test should run, false otherwise
   before?: () => void | Cypress.Chainable<any>; // Function to run before the test
   after?: () => void | Cypress.Chainable<any>; // Function to run after the test
+  tags?: string | string[]; // Tags for cypress-grep plugin
 }
 
 // Plugin configuration
@@ -407,7 +408,9 @@ export function cytest(
   const fn: () => void | Cypress.Chainable<any> = typeof optionsOrFn === 'function' ? optionsOrFn : fnOrUndefined!;
 
   // Use regular Cypress it() function
-  return it(name, function() {
+  // Pass tags to the underlying it function for cypress-grep compatibility
+  const itOptions = options.tags ? { tags: options.tags } : undefined;
+  return it(name, itOptions, function() {
     // Check if the runIf function exists and evaluates to false
     if (options.runIf && !options.runIf()) {
       cy.log(`Skipping test "${name}" because runIf condition is not met`);
@@ -490,7 +493,15 @@ cytest.skip = function(
     typeof optionsOrFn === 'function' ? optionsOrFn : 
     fnOrUndefined;
 
-  return it.skip(name, fn as any);
+  // Determine if options were provided
+  const options: CytestOptions = 
+    optionsOrFn === undefined ? {} : 
+    typeof optionsOrFn === 'function' ? {} : 
+    optionsOrFn;
+
+  // Pass tags to the underlying it.skip function for cypress-grep compatibility
+  const itOptions = options.tags ? { tags: options.tags } : undefined;
+  return it.skip(name, itOptions, fn as any);
 };
 
 /**
@@ -529,7 +540,9 @@ cytest.only = function(
   const options: CytestOptions = typeof optionsOrFn === 'function' ? {} : optionsOrFn;
   const fn: () => void | Cypress.Chainable<any> = typeof optionsOrFn === 'function' ? optionsOrFn : fnOrUndefined!;
 
-  return it.only(name, function() {
+  // Pass tags to the underlying it.only function for cypress-grep compatibility
+  const itOptions = options.tags ? { tags: options.tags } : undefined;
+  return it.only(name, itOptions, function() {
     // Check if the runIf function exists and evaluates to false
     if (options.runIf && !options.runIf()) {
       cy.log(`Skipping test "${name}" because runIf condition is not met`);
