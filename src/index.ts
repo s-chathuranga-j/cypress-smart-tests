@@ -411,6 +411,25 @@ export function cytest(
   // Pass tags to the underlying it function for cypress-grep compatibility
   const itOptions = options.tags ? { tags: options.tags } : undefined;
   return it(name, itOptions, function() {
+    // Check if grepTags is defined and if this test's tags match
+    const grepTags = Cypress.env('grepTags');
+    if (grepTags && options.tags) {
+      const testTags = Array.isArray(options.tags) ? options.tags : [options.tags];
+      const requiredTags = Array.isArray(grepTags) ? grepTags : [grepTags];
+
+      // Check if any of the test's tags match any of the required tags
+      const hasMatchingTag = testTags.some(tag => 
+        requiredTags.some(reqTag => tag === reqTag)
+      );
+
+      if (!hasMatchingTag) {
+        cy.log(`Skipping test "${name}" because it doesn't have the required tag(s): ${grepTags}`);
+        cy.log('Test skipped');
+        this.skip();
+        return;
+      }
+    }
+
     // Check if the runIf function exists and evaluates to false
     if (options.runIf && !options.runIf()) {
       cy.log(`Skipping test "${name}" because runIf condition is not met`);
@@ -501,6 +520,8 @@ cytest.skip = function(
 
   // Pass tags to the underlying it.skip function for cypress-grep compatibility
   const itOptions = options.tags ? { tags: options.tags } : undefined;
+
+  // For skip, we don't need to check grepTags since the test is already being skipped
   return it.skip(name, itOptions, fn as any);
 };
 
@@ -543,6 +564,25 @@ cytest.only = function(
   // Pass tags to the underlying it.only function for cypress-grep compatibility
   const itOptions = options.tags ? { tags: options.tags } : undefined;
   return it.only(name, itOptions, function() {
+    // Check if grepTags is defined and if this test's tags match
+    const grepTags = Cypress.env('grepTags');
+    if (grepTags && options.tags) {
+      const testTags = Array.isArray(options.tags) ? options.tags : [options.tags];
+      const requiredTags = Array.isArray(grepTags) ? grepTags : [grepTags];
+
+      // Check if any of the test's tags match any of the required tags
+      const hasMatchingTag = testTags.some(tag => 
+        requiredTags.some(reqTag => tag === reqTag)
+      );
+
+      if (!hasMatchingTag) {
+        cy.log(`Skipping test "${name}" because it doesn't have the required tag(s): ${grepTags}`);
+        cy.log('Test skipped');
+        this.skip();
+        return;
+      }
+    }
+
     // Check if the runIf function exists and evaluates to false
     if (options.runIf && !options.runIf()) {
       cy.log(`Skipping test "${name}" because runIf condition is not met`);

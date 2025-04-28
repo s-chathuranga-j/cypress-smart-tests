@@ -10,7 +10,7 @@ describe('Cypress Smart Tests Plugin - Tagged Tests', () => {
 
   context('Tests with Single Tag', () => {
     cytest('Test with user tag', 
-      { tags: 'user' }, 
+      { tags: '@user' },
       () => {
         cy.log('This test has a single "user" tag');
         cy.wrap(true).should('be.true');
@@ -18,7 +18,7 @@ describe('Cypress Smart Tests Plugin - Tagged Tests', () => {
     );
 
     cytest('Test with admin tag', 
-      { tags: 'admin' }, 
+      { tags: '@admin' },
       () => {
         cy.log('This test has a single "admin" tag');
         cy.wrap(true).should('be.true');
@@ -28,7 +28,7 @@ describe('Cypress Smart Tests Plugin - Tagged Tests', () => {
 
   context('Tests with Multiple Tags', () => {
     cytest('Test with multiple tags', 
-      { tags: ['user', 'profile'] }, 
+      { tags: ['@user', 'profile'] },
       () => {
         cy.log('This test has both "user" and "profile" tags');
         cy.wrap(true).should('be.true');
@@ -36,7 +36,7 @@ describe('Cypress Smart Tests Plugin - Tagged Tests', () => {
     );
 
     cytest('Test with different multiple tags', 
-      { tags: ['admin', 'dashboard'] }, 
+      { tags: ['@admin', '@dashboard'] },
       () => {
         cy.log('This test has both "admin" and "dashboard" tags');
         cy.wrap(true).should('be.true');

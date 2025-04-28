@@ -421,13 +421,15 @@ describe('Advanced Conditional Tests', () => {
 
 You can use tags to filter tests when using the cypress-grep plugin alongside cypress-smart-tests.
 
+#### Defining Tags
+
 ```javascript
 import { cytest } from 'cypress-smart-tests';
 
 describe('Tagged Tests', () => {
   // Test with a single tag
   cytest('Basic User Test', 
-    { tags: 'user' }, 
+    { tags: '@user' }, 
     () => {
       cy.visit('/user/profile');
       cy.get('.user-info').should('be.visible');
@@ -437,7 +439,7 @@ describe('Tagged Tests', () => {
   // Test with multiple tags
   cytest('Admin Dashboard Test', 
     { 
-      tags: ['admin', 'dashboard'],
+      tags: ['@admin', '@dashboard'],
       runIf: () => Cypress.env('TEST_ADMIN') === true
     }, 
     () => {
@@ -449,7 +451,7 @@ describe('Tagged Tests', () => {
   // Test with tags and hooks
   cytest('Payment Processing Test', 
     {
-      tags: ['payment', 'critical'],
+      tags: ['@payment', '@critical'],
       before: () => {
         cy.log('Setting up payment test data');
         cy.request('POST', '/api/test-data/payment');
@@ -469,6 +471,20 @@ describe('Tagged Tests', () => {
   );
 });
 ```
+
+#### Running Tests with Tags
+
+To run only tests with specific tags, use the `grepTags` environment variable:
+
+```bash
+# Run only tests with the @user tag
+npx cypress run --env grepTags='@user'
+
+# Run tests with either @admin or @dashboard tags
+npx cypress run --env grepTags='@admin,@dashboard'
+```
+
+When using the `grepTags` environment variable, only tests with matching tags will be executed. Tests without the specified tags will be skipped.
 
 ### Advanced Persistent Variables
 
