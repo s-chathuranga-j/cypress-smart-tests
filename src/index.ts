@@ -408,8 +408,13 @@ export function cytest(
   const fn: () => void | Cypress.Chainable<any> = typeof optionsOrFn === 'function' ? optionsOrFn : fnOrUndefined!;
 
   // Use regular Cypress it() function
-  // Pass tags to the underlying it function for cypress-grep compatibility
-  const itOptions = options.tags ? { tags: options.tags } : undefined;
+  // Pass tags and other Cypress options to the underlying it function
+  // Create a copy of options excluding cytest-specific properties
+  const { runIf, before, after, tags, ...cypressOptions } = options;
+
+  // Add tags if they exist
+  const itOptions = tags ? { ...cypressOptions, tags } : cypressOptions;
+
   // @ts-ignore
   return it(name, itOptions, function() {
     // Check if grepTags is defined and if this test's tags match
@@ -519,8 +524,12 @@ cytest.skip = function(
     typeof optionsOrFn === 'function' ? {} : 
     optionsOrFn;
 
-  // Pass tags to the underlying it.skip function for cypress-grep compatibility
-  const itOptions = options.tags ? { tags: options.tags } : undefined;
+  // Pass tags and other Cypress options to the underlying it.skip function
+  // Create a copy of options excluding cytest-specific properties
+  const { runIf, before, after, tags, ...cypressOptions } = options;
+
+  // Add tags if they exist
+  const itOptions = tags ? { ...cypressOptions, tags } : cypressOptions;
 
   // For skip, we don't need to check grepTags since the test is already being skipped
   // @ts-ignore
@@ -563,8 +572,13 @@ cytest.only = function(
   const options: CytestOptions = typeof optionsOrFn === 'function' ? {} : optionsOrFn;
   const fn: () => void | Cypress.Chainable<any> = typeof optionsOrFn === 'function' ? optionsOrFn : fnOrUndefined!;
 
-  // Pass tags to the underlying it.only function for cypress-grep compatibility
-  const itOptions = options.tags ? { tags: options.tags } : undefined;
+  // Pass tags and other Cypress options to the underlying it.only function
+  // Create a copy of options excluding cytest-specific properties
+  const { runIf, before, after, tags, ...cypressOptions } = options;
+
+  // Add tags if they exist
+  const itOptions = tags ? { ...cypressOptions, tags } : cypressOptions;
+
   // @ts-ignore
   return it.only(name, itOptions, function() {
     // Check if grepTags is defined and if this test's tags match
