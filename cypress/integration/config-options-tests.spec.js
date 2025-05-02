@@ -65,7 +65,7 @@ describe('Cypress Smart Tests Plugin - Config Options', () => {
     cytest('Test with config and cytest options', 
       { 
         baseUrl: 'https://example.com',
-        tags: 'config-test',
+        tags: '@config-test, @tagtest',
         runIf: () => true,
         before: () => {
           cy.log('Running setup for test with config options');

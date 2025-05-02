@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.1] - 2025-04-05
+
+### Fixed
+- Fixed handling of comma-separated tags in both test definitions and grepTags environment variable
+- Improved tag matching to correctly support multiple tag values when provided as a comma-separated string
+
 ## [2.1.0] - 2025-04-01
 
 ### Added

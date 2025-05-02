@@ -420,8 +420,19 @@ export function cytest(
     // Check if grepTags is defined and if this test's tags match
     const grepTags = Cypress.env('grepTags');
     if (grepTags && options.tags) {
-      const testTags = Array.isArray(options.tags) ? options.tags : [options.tags];
-      const requiredTags = Array.isArray(grepTags) ? grepTags : [grepTags];
+      // Split tags by comma if it's a string and trim whitespace
+      const testTags = Array.isArray(options.tags) 
+        ? options.tags 
+        : typeof options.tags === 'string' 
+          ? options.tags.split(',').map(tag => tag.trim()) 
+          : [options.tags];
+
+      // Split grepTags by comma if it's a string and trim whitespace
+      const requiredTags = Array.isArray(grepTags) 
+        ? grepTags 
+        : typeof grepTags === 'string' 
+          ? grepTags.split(',').map(tag => tag.trim()) 
+          : [grepTags];
 
       // Check if any of the test's tags match any of the required tags
       const hasMatchingTag = testTags.some(tag => 
@@ -584,8 +595,19 @@ cytest.only = function(
     // Check if grepTags is defined and if this test's tags match
     const grepTags = Cypress.env('grepTags');
     if (grepTags && options.tags) {
-      const testTags = Array.isArray(options.tags) ? options.tags : [options.tags];
-      const requiredTags = Array.isArray(grepTags) ? grepTags : [grepTags];
+      // Split tags by comma if it's a string and trim whitespace
+      const testTags = Array.isArray(options.tags) 
+        ? options.tags 
+        : typeof options.tags === 'string' 
+          ? options.tags.split(',').map(tag => tag.trim()) 
+          : [options.tags];
+
+      // Split grepTags by comma if it's a string and trim whitespace
+      const requiredTags = Array.isArray(grepTags) 
+        ? grepTags 
+        : typeof grepTags === 'string' 
+          ? grepTags.split(',').map(tag => tag.trim()) 
+          : [grepTags];
 
       // Check if any of the test's tags match any of the required tags
       const hasMatchingTag = testTags.some(tag => 
