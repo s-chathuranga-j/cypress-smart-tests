@@ -1,6 +1,6 @@
 # cypress-smart-tests
 
-![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)
+![Version](https://img.shields.io/badge/version-2.1.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
 A powerful Cypress plugin that enhances your test suite with smart execution capabilities:
@@ -287,6 +287,7 @@ A wrapper around Cypress's `it()` function that respects test dependencies and s
   - `runIf` (function): A function that returns a boolean indicating whether the test should run
   - `before` (function): A function to run before the test (useful for setup)
   - `after` (function): A function to run after the test (useful for cleanup)
+  - `tags` (string | string[]): Tags for filtering tests with cypress-grep plugin
 - `fn` (function): The test function
 
 ### `defineTestDependencies(dependencies)`
@@ -415,6 +416,75 @@ describe('Advanced Conditional Tests', () => {
   );
 });
 ```
+
+### Using Tags with cypress-grep
+
+You can use tags to filter tests when using the cypress-grep plugin alongside cypress-smart-tests.
+
+#### Defining Tags
+
+```javascript
+import { cytest } from 'cypress-smart-tests';
+
+describe('Tagged Tests', () => {
+  // Test with a single tag
+  cytest('Basic User Test', 
+    { tags: '@user' }, 
+    () => {
+      cy.visit('/user/profile');
+      cy.get('.user-info').should('be.visible');
+    }
+  );
+
+  // Test with multiple tags
+  cytest('Admin Dashboard Test', 
+    { 
+      tags: ['@admin', '@dashboard'],
+      runIf: () => Cypress.env('TEST_ADMIN') === true
+    }, 
+    () => {
+      cy.visit('/admin/dashboard');
+      cy.get('.admin-panel').should('be.visible');
+    }
+  );
+
+  // Test with tags and hooks
+  cytest('Payment Processing Test', 
+    {
+      tags: ['@payment', '@critical'],
+      before: () => {
+        cy.log('Setting up payment test data');
+        cy.request('POST', '/api/test-data/payment');
+      },
+      after: () => {
+        cy.log('Cleaning up payment test data');
+        cy.request('DELETE', '/api/test-data/payment');
+      }
+    }, 
+    () => {
+      cy.visit('/checkout');
+      cy.get('#payment-form').should('be.visible');
+      cy.get('#card-number').type('4242424242424242');
+      cy.get('#submit-payment').click();
+      cy.get('.payment-success').should('be.visible');
+    }
+  );
+});
+```
+
+#### Running Tests with Tags
+
+To run only tests with specific tags, use the `grepTags` environment variable:
+
+```bash
+# Run only tests with the @user tag
+npx cypress run --env grepTags='@user'
+
+# Run tests with either @admin or @dashboard tags
+npx cypress run --env grepTags='@admin,@dashboard'
+```
+
+When using the `grepTags` environment variable, only tests with matching tags will be executed. Tests without the specified tags will be skipped.
 
 ### Advanced Persistent Variables
 

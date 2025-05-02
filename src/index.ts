@@ -29,6 +29,7 @@ interface CytestOptions {
   runIf?: () => boolean; // Function that returns true if the test should run, false otherwise
   before?: () => void | Cypress.Chainable<any>; // Function to run before the test
   after?: () => void | Cypress.Chainable<any>; // Function to run after the test
+  tags?: string | string[]; // Tags for cypress-grep plugin
 }
 
 // Plugin configuration
@@ -407,7 +408,34 @@ export function cytest(
   const fn: () => void | Cypress.Chainable<any> = typeof optionsOrFn === 'function' ? optionsOrFn : fnOrUndefined!;
 
   // Use regular Cypress it() function
-  return it(name, function() {
+  // Pass tags and other Cypress options to the underlying it function
+  // Create a copy of options excluding cytest-specific properties
+  const { runIf, before, after, tags, ...cypressOptions } = options;
+
+  // Add tags if they exist
+  const itOptions = tags ? { ...cypressOptions, tags } : cypressOptions;
+
+  // @ts-ignore
+  return it(name, itOptions, function() {
+    // Check if grepTags is defined and if this test's tags match
+    const grepTags = Cypress.env('grepTags');
+    if (grepTags && options.tags) {
+      const testTags = Array.isArray(options.tags) ? options.tags : [options.tags];
+      const requiredTags = Array.isArray(grepTags) ? grepTags : [grepTags];
+
+      // Check if any of the test's tags match any of the required tags
+      const hasMatchingTag = testTags.some(tag => 
+        requiredTags.some(reqTag => tag === reqTag)
+      );
+
+      if (!hasMatchingTag) {
+        cy.log(`Skipping test "${name}" because it doesn't have the required tag(s): ${grepTags}`);
+        cy.log('Test skipped');
+        this.skip();
+        return;
+      }
+    }
+
     // Check if the runIf function exists and evaluates to false
     if (options.runIf && !options.runIf()) {
       cy.log(`Skipping test "${name}" because runIf condition is not met`);
@@ -490,7 +518,22 @@ cytest.skip = function(
     typeof optionsOrFn === 'function' ? optionsOrFn : 
     fnOrUndefined;
 
-  return it.skip(name, fn as any);
+  // Determine if options were provided
+  const options: CytestOptions = 
+    optionsOrFn === undefined ? {} : 
+    typeof optionsOrFn === 'function' ? {} : 
+    optionsOrFn;
+
+  // Pass tags and other Cypress options to the underlying it.skip function
+  // Create a copy of options excluding cytest-specific properties
+  const { runIf, before, after, tags, ...cypressOptions } = options;
+
+  // Add tags if they exist
+  const itOptions = tags ? { ...cypressOptions, tags } : cypressOptions;
+
+  // For skip, we don't need to check grepTags since the test is already being skipped
+  // @ts-ignore
+  return it.skip(name, itOptions, fn as any);
 };
 
 /**
@@ -529,7 +572,34 @@ cytest.only = function(
   const options: CytestOptions = typeof optionsOrFn === 'function' ? {} : optionsOrFn;
   const fn: () => void | Cypress.Chainable<any> = typeof optionsOrFn === 'function' ? optionsOrFn : fnOrUndefined!;
 
-  return it.only(name, function() {
+  // Pass tags and other Cypress options to the underlying it.only function
+  // Create a copy of options excluding cytest-specific properties
+  const { runIf, before, after, tags, ...cypressOptions } = options;
+
+  // Add tags if they exist
+  const itOptions = tags ? { ...cypressOptions, tags } : cypressOptions;
+
+  // @ts-ignore
+  return it.only(name, itOptions, function() {
+    // Check if grepTags is defined and if this test's tags match
+    const grepTags = Cypress.env('grepTags');
+    if (grepTags && options.tags) {
+      const testTags = Array.isArray(options.tags) ? options.tags : [options.tags];
+      const requiredTags = Array.isArray(grepTags) ? grepTags : [grepTags];
+
+      // Check if any of the test's tags match any of the required tags
+      const hasMatchingTag = testTags.some(tag => 
+        requiredTags.some(reqTag => tag === reqTag)
+      );
+
+      if (!hasMatchingTag) {
+        cy.log(`Skipping test "${name}" because it doesn't have the required tag(s): ${grepTags}`);
+        cy.log('Test skipped');
+        this.skip();
+        return;
+      }
+    }
+
     // Check if the runIf function exists and evaluates to false
     if (options.runIf && !options.runIf()) {
       cy.log(`Skipping test "${name}" because runIf condition is not met`);
