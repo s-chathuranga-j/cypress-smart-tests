@@ -1,6 +1,7 @@
 const { defineConfig } = require('cypress');
 
 module.exports = defineConfig({
+  allowCypressEnv: false,
   e2e: {
     specPattern: 'cypress/integration/**/*.{js,jsx,ts,tsx}',
     supportFile: 'cypress/support/index.js',

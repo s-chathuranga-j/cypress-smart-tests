@@ -6,6 +6,11 @@ describe('Cypress Smart Tests Plugin - Tagged Tests', () => {
   beforeEach(() => {
     // Reset the plugin state before each test suite
     resetState();
+
+    Cypress.expose({
+      ENABLE_FEATURE_X: true,
+      ENABLE_FEATURE_Y: false,
+    });
   });
 
   context('Tests with Single Tag', () => {
@@ -45,17 +50,11 @@ describe('Cypress Smart Tests Plugin - Tagged Tests', () => {
   });
 
   context('Tests with Tags and Conditions', () => {
-    // Set up environment variables for testing
-    beforeEach(() => {
-      Cypress.env('ENABLE_FEATURE_X', true);
-      Cypress.env('ENABLE_FEATURE_Y', false);
-    });
-
-    cytest('Test with tag and true condition', 
+    cytest('Test with tag and true condition',
       { 
         tags: 'feature-x',
-        runIf: () => Cypress.env('ENABLE_FEATURE_X')
-      }, 
+        runIf: () => Cypress.expose('ENABLE_FEATURE_X') === true
+      },
       () => {
         cy.log('This test has a "feature-x" tag and should run because ENABLE_FEATURE_X is true');
         cy.wrap(true).should('be.true');
@@ -65,8 +64,8 @@ describe('Cypress Smart Tests Plugin - Tagged Tests', () => {
     cytest('Test with tags and false condition', 
       { 
         tags: ['feature-y', 'experimental'],
-        runIf: () => Cypress.env('ENABLE_FEATURE_Y')
-      }, 
+        runIf: () => Cypress.expose('ENABLE_FEATURE_Y') === true
+      },
       () => {
         cy.log('This test has "feature-y" and "experimental" tags but should be skipped because ENABLE_FEATURE_Y is false');
         cy.wrap(false).should('be.true'); // This would fail if the test ran

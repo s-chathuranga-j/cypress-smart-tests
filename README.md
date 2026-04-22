@@ -1,6 +1,6 @@
 # cypress-smart-tests
 
-![Version](https://img.shields.io/badge/version-2.1.0-blue.svg)
+![Version](https://img.shields.io/badge/version-2.1.1-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
 A powerful Cypress plugin that enhances your test suite with smart execution capabilities:
@@ -29,6 +29,18 @@ A powerful Cypress plugin that enhances your test suite with smart execution cap
 ```bash
 npm install --save-dev cypress-smart-tests
 ```
+
+For Cypress `15.14.1`, configure Cypress to disable the legacy browser-side `Cypress.env()` API and use `cy.env()` instead:
+
+```javascript
+const { defineConfig } = require('cypress');
+
+module.exports = defineConfig({
+  allowCypressEnv: false,
+});
+```
+
+Use `Cypress.expose()` for browser-side feature flags or other non-secret values that need synchronous access inside `runIf`, and use `cy.env()` for environment values coming from Cypress config or the CLI.
 
 ## Quick Start
 
@@ -124,7 +136,7 @@ import { cytest } from 'cypress-smart-tests';
 describe('Conditional Tests', () => {
   // Test that runs only when a feature flag is enabled
   cytest('Feature X Test', 
-    { runIf: () => Cypress.env('ENABLE_FEATURE_X') === true }, 
+    { runIf: () => cy.env(['ENABLE_FEATURE_X']).then(({ ENABLE_FEATURE_X }) => ENABLE_FEATURE_X === true) }, 
     () => {
       cy.log('Testing Feature X');
       cy.visit('/feature-x');
@@ -194,12 +206,14 @@ describe('Tests with Hooks', () => {
 
   // Combine hooks with conditional execution
   cytest('Admin Feature Test', {
-    runIf: () => Cypress.env('TEST_ADMIN_FEATURES') === true,
+    runIf: () => cy.env(['TEST_ADMIN_FEATURES']).then(({ TEST_ADMIN_FEATURES }) => TEST_ADMIN_FEATURES === true),
     before: () => {
       cy.log('Setting up admin user');
-      cy.request('POST', '/api/login', {
-        username: 'admin',
-        password: Cypress.env('ADMIN_PASSWORD')
+      cy.env(['ADMIN_PASSWORD']).then(({ ADMIN_PASSWORD }) => {
+        cy.request('POST', '/api/login', {
+          username: 'admin',
+          password: ADMIN_PASSWORD
+        });
       });
     },
     after: () => {
@@ -384,13 +398,15 @@ describe('Advanced Conditional Tests', () => {
   // Test that runs based on multiple conditions
   cytest('Premium Feature Test', 
     { runIf: () => {
-      // Only run this test if:
-      // 1. We're testing premium features
-      // 2. We're in a specific environment
-      // 3. We're using a specific browser
-      return Cypress.env('TEST_PREMIUM_FEATURES') === true &&
-             Cypress.env('ENVIRONMENT') === 'staging' &&
-             Cypress.browser.name === 'chrome';
+      return cy.env(['TEST_PREMIUM_FEATURES', 'ENVIRONMENT']).then(({ TEST_PREMIUM_FEATURES, ENVIRONMENT }) => {
+        // Only run this test if:
+        // 1. We're testing premium features
+        // 2. We're in a specific environment
+        // 3. We're using a specific browser
+        return TEST_PREMIUM_FEATURES === true &&
+               ENVIRONMENT === 'staging' &&
+               Cypress.browser.name === 'chrome';
+      });
     }}, 
     () => {
       cy.log('Testing premium features in staging on Chrome');
@@ -440,7 +456,7 @@ describe('Tagged Tests', () => {
   cytest('Admin Dashboard Test', 
     { 
       tags: ['@admin', '@dashboard'],
-      runIf: () => Cypress.env('TEST_ADMIN') === true
+      runIf: () => cy.env(['TEST_ADMIN']).then(({ TEST_ADMIN }) => TEST_ADMIN === true)
     }, 
     () => {
       cy.visit('/admin/dashboard');
@@ -474,7 +490,7 @@ describe('Tagged Tests', () => {
 
 #### Running Tests with Tags
 
-To run only tests with specific tags, use the `grepTags` environment variable:
+To run only tests with specific tags, use the `grepTags` environment variable. Cypress Smart Tests applies the tag matching internally, so `tags` do not need to be forwarded into Cypress test config:
 
 ```bash
 # Run only tests with the @user tag
@@ -654,7 +670,7 @@ describe('Combined Features', () => {
   });
 
   cytest('Feature A Test', {
-    runIf: () => Cypress.env('ENABLE_FEATURE_A') === true,
+    runIf: () => cy.env(['ENABLE_FEATURE_A']).then(({ ENABLE_FEATURE_A }) => ENABLE_FEATURE_A === true),
     before: () => {
       cy.log('Setting up Feature A test');
       cy.request('POST', '/api/features/a/enable');
@@ -675,7 +691,7 @@ describe('Combined Features', () => {
   });
 
   cytest('Feature B Test', {
-    runIf: () => Cypress.env('ENABLE_FEATURE_B') === true,
+    runIf: () => cy.env(['ENABLE_FEATURE_B']).then(({ ENABLE_FEATURE_B }) => ENABLE_FEATURE_B === true),
     before: () => {
       // Check if setup is complete
       const setupComplete = cyVariable('setupComplete');

@@ -1,6 +1,6 @@
 {
   "name": "cypress-smart-tests",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "Cypress plugin for smart test execution with dependencies, conditional tests, and hooks",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -39,17 +39,17 @@
   },
   "homepage": "https://github.com/s-chathuranga-j/cypress-smart-tests#readme",
   "peerDependencies": {
-    "cypress": ">=9.0.0"
+    "cypress": ">=15.14.1"
   },
   "devDependencies": {
-    "cypress": "^12.0.0",
+    "cypress": "15.14.1",
     "typescript": "^4.9.0",
-    "@types/node": "^16.11.7",
+    "@types/node": "^20.17.30",
     "eslint": "^8.2.0",
     "@typescript-eslint/eslint-plugin": "^5.4.0",
     "@typescript-eslint/parser": "^5.4.0"
   },
   "engines": {
-    "node": ">=12.0.0"
+    "node": "^20.1.0 || ^22.0.0 || >=24.0.0"
   }
 }

@@ -7,9 +7,10 @@ describe('Cypress Smart Tests Plugin - Conditional Execution', () => {
     // Reset the plugin state before each test suite
     resetState();
 
-    // Set some environment variables for testing
-    Cypress.env('ENABLE_FEATURE_X', true);
-    Cypress.env('ENABLE_FEATURE_Y', false);
+    Cypress.expose({
+      ENABLE_FEATURE_X: true,
+      ENABLE_FEATURE_Y: false,
+    });
   });
 
   context('Conditional Tests with runIf', () => {
@@ -19,7 +20,7 @@ describe('Cypress Smart Tests Plugin - Conditional Execution', () => {
     });
 
     cytest('Test that runs when condition is true', 
-      { runIf: () => Cypress.env('ENABLE_FEATURE_X') }, 
+      { runIf: () => Cypress.expose('ENABLE_FEATURE_X') === true },
       () => {
         cy.log('This test should run because ENABLE_FEATURE_X is true');
         cy.wrap(true).should('be.true');
@@ -27,7 +28,7 @@ describe('Cypress Smart Tests Plugin - Conditional Execution', () => {
     );
 
     cytest('Test that is skipped when condition is false', 
-      { runIf: () => Cypress.env('ENABLE_FEATURE_Y') }, 
+      { runIf: () => Cypress.expose('ENABLE_FEATURE_Y') === true },
       () => {
         cy.log('This test should be skipped because ENABLE_FEATURE_Y is false');
         cy.wrap(false).should('be.true'); // This would fail if the test ran
@@ -55,7 +56,7 @@ describe('Cypress Smart Tests Plugin - Conditional Execution', () => {
 
     // Uncomment to test .only() functionality with options
     // cytest.only('Only test with condition', 
-    //   { runIf: () => Cypress.env('ENABLE_FEATURE_X') }, 
+    //   { runIf: () => Cypress.expose('ENABLE_FEATURE_X') === true },
     //   () => {
     //     cy.log('This would be the only test that runs, and only if ENABLE_FEATURE_X is true');
     //     cy.wrap(true).should('be.true');
@@ -66,7 +67,7 @@ describe('Cypress Smart Tests Plugin - Conditional Execution', () => {
   context('Conditional Tests with skip', () => {
     // Test that skip works with options
     cytest.skip('Skipped test with condition', 
-      { runIf: () => Cypress.env('ENABLE_FEATURE_X') }, 
+      { runIf: () => Cypress.expose('ENABLE_FEATURE_X') === true },
       () => {
         cy.log('This test should be skipped regardless of the condition');
         cy.wrap(false).should('be.true'); // This would fail if the test ran

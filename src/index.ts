@@ -24,11 +24,14 @@ interface TestDependencies {
   [parentTest: string]: string[]; // parent test -> dependent tests
 }
 
+type TestExecutionCallback = (this: Mocha.Context) => void | Cypress.Chainable<any>;
+type RunIfResult = boolean | Promise<boolean> | Cypress.Chainable<boolean>;
+
 // Test options
-interface CytestOptions {
-  runIf?: () => boolean; // Function that returns true if the test should run, false otherwise
-  before?: () => void | Cypress.Chainable<any>; // Function to run before the test
-  after?: () => void | Cypress.Chainable<any>; // Function to run after the test
+interface CytestOptions extends Cypress.TestConfigOverrides {
+  runIf?: () => RunIfResult; // Function that returns true if the test should run, false otherwise
+  before?: TestExecutionCallback; // Function to run before the test
+  after?: TestExecutionCallback; // Function to run after the test
   tags?: string | string[]; // Tags for cypress-grep plugin
 }
 
@@ -61,7 +64,11 @@ function markTestAsFailed(testName: string): void {
 // Set up a global handler for test failures
 Cypress.on('fail', (error, runnable) => {
   // Update the failed tests list when a test fails
-  const testName = runnable.title;
+  const testName = runnable?.title;
+
+  if (!testName) {
+    throw error;
+  }
 
   console.log(`[DEBUG] Test "${testName}" failed. Marking as failed.`);
   markTestAsFailed(testName);
@@ -147,7 +154,7 @@ export function configure(newConfig: Partial<PluginConfig>): void {
  * });
  * ```
  */
-export function resetState(resetVariables: boolean = false): void {
+export function resetState(resetVariables = false): void {
   if (typeof window !== 'undefined') {
     window.failedTests = [];
     if (resetVariables) {
@@ -305,48 +312,193 @@ export function cyVariables(): {
 }
 
 /**
- * Check if a test should be skipped based on its dependencies
- * @param testName The name of the test
- * @param visited Set of test names that have already been checked (to prevent infinite recursion)
- * @returns true if the test should be skipped, false otherwise
- */
-function shouldSkipTest(testName: string, visited: Set<string> = new Set()): boolean {
-  // If we've already checked this test, return false to break the recursion
-  if (visited.has(testName)) {
-    return false;
-  }
-
-  // Add this test to the visited set
-  visited.add(testName);
-
-  // Find all parent tests that this test depends on
-  const parentTests = Object.entries(testDependencies)
-    .filter(([_, dependents]) => dependents.includes(testName))
-    .map(([parent, _]) => parent);
-
-  // If any parent test has failed, skip this test
-  if (parentTests.some(parent => hasTestFailed(parent))) {
-    return true;
-  }
-
-  // Also check for transitive dependencies (if A depends on B and B depends on C, then A indirectly depends on C)
-  for (const parent of parentTests) {
-    if (shouldSkipTest(parent, visited)) {
-      // If any parent should be skipped, this test should also be skipped
-      return true;
-    }
-  }
-
-  return false;
-}
-
-/**
  * Get all tests that depend on a given test
  * @param testName The name of the test
  * @returns An array of test names that depend on the given test
  */
 function getDependentTests(testName: string): string[] {
   return testDependencies[testName] || [];
+}
+
+function getAllDependents(testName: string, visited: Set<string> = new Set()): string[] {
+  if (visited.has(testName)) {
+    return [];
+  }
+
+  visited.add(testName);
+
+  const directDeps = getDependentTests(testName);
+  const allDeps = [...directDeps];
+
+  for (const dep of directDeps) {
+    const nestedDeps = getAllDependents(dep, visited);
+    allDeps.push(...nestedDeps);
+  }
+
+  return allDeps;
+}
+
+function getParentTests(testName: string): string[] {
+  return Object.entries(testDependencies)
+    .filter(([, dependents]) => dependents.includes(testName))
+    .map(([parent]) => parent);
+}
+
+function getFailedParentTest(testName: string): string | undefined {
+  return getParentTests(testName).find((parent) => hasTestFailed(parent));
+}
+
+function normalizeTags(tags?: unknown): string[] {
+  if (typeof tags === 'string') {
+    return tags
+      .split(',')
+      .map((tag) => tag.trim())
+      .filter(Boolean);
+  }
+
+  if (!Array.isArray(tags)) {
+    return [];
+  }
+
+  return tags
+    .filter((tag): tag is string => typeof tag === 'string')
+    .flatMap((tag) => tag.split(','))
+    .map((tag) => tag.trim())
+    .filter(Boolean);
+}
+
+function splitCytestOptions(options: CytestOptions): {
+  cypressOptions: Cypress.TestConfigOverrides;
+  cytestOptions: Pick<CytestOptions, 'runIf' | 'before' | 'after' | 'tags'>;
+} {
+  const { runIf, before, after, tags, ...cypressOptions } = options;
+
+  return {
+    cypressOptions,
+    cytestOptions: { runIf, before, after, tags }
+  };
+}
+
+function resolveTestCallback(
+  optionsOrFn: CytestOptions | TestExecutionCallback,
+  fnOrUndefined?: TestExecutionCallback
+): TestExecutionCallback {
+  if (typeof optionsOrFn === 'function') {
+    return optionsOrFn;
+  }
+
+  if (!fnOrUndefined) {
+    throw new Error('cytest requires a test callback when options are provided');
+  }
+
+  return fnOrUndefined;
+}
+
+function isPromiseLike<T>(value: unknown): value is PromiseLike<T> {
+  return typeof value === 'object' && value !== null && 'then' in value;
+}
+
+function getEnvValue<T = any>(name: string): Cypress.Chainable<T | undefined> {
+  const envValues = Cypress.config('env') as Record<string, any> | undefined;
+
+  return cy.wrap(envValues?.[name] as T | undefined, { log: false });
+}
+
+function resolveRunIf(runIf?: CytestOptions['runIf']): Cypress.Chainable<boolean> {
+  if (!runIf) {
+    return cy.wrap(true, { log: false });
+  }
+
+  return cy.wrap(null, { log: false }).then(() => {
+      const result = runIf();
+
+      if (Cypress.isCy(result)) {
+        return (result as Cypress.Chainable<boolean>).then((value) => Boolean(value));
+      }
+
+      if (isPromiseLike<boolean>(result)) {
+        return (result as PromiseLike<boolean>).then((value: boolean) => Boolean(value));
+      }
+
+      return Boolean(result);
+    }) as Cypress.Chainable<boolean>;
+}
+
+function shouldRunForTags(name: string, tags?: string | string[]): Cypress.Chainable<boolean> {
+  const normalizedTags = normalizeTags(tags);
+
+  if (normalizedTags.length === 0) {
+    return cy.wrap(true, { log: false });
+  }
+
+  return getEnvValue<string | string[]>('grepTags').then((grepTags) => {
+    const requiredTags = normalizeTags(grepTags as string | string[] | undefined);
+
+    if (requiredTags.length === 0) {
+      return true;
+    }
+
+    const hasMatchingTag = normalizedTags.some((tag) => requiredTags.includes(tag));
+
+    if (!hasMatchingTag) {
+      cy.log(`Skipping test "${name}" because it doesn't have the required tag(s): ${requiredTags.join(', ')}`);
+    }
+
+    return hasMatchingTag;
+  });
+}
+
+function executeCytest(
+  name: string,
+  options: CytestOptions,
+  fn: TestExecutionCallback,
+  context: Mocha.Context
+): Cypress.Chainable<any> {
+  return shouldRunForTags(name, options.tags)
+    .then((hasRequiredTags) => {
+      if (!hasRequiredTags) {
+        cy.log('Test skipped');
+        context.skip();
+        return false;
+      }
+
+      return resolveRunIf(options.runIf);
+    })
+    .then((runConditionMet) => {
+      if (!runConditionMet) {
+        cy.log(`Skipping test "${name}" because runIf condition is not met`);
+        cy.log('Test skipped');
+        context.skip();
+        return false;
+      }
+
+      const failedParentTest = getFailedParentTest(name);
+
+      if (failedParentTest) {
+        cy.log(`Skipping test "${name}" because its dependency "${failedParentTest}" failed`);
+        cy.log('Test skipped');
+        context.skip();
+        return false;
+      }
+
+      let testChain = cy.wrap(null, { log: false });
+      const beforeHook = options.before;
+      const afterHook = options.after;
+
+      if (beforeHook) {
+        cy.log(`Running before hook for test "${name}"`);
+        testChain = testChain.then(() => beforeHook.call(context)) as unknown as Cypress.Chainable<null>;
+      }
+
+      testChain = testChain.then(() => fn.call(context)) as unknown as Cypress.Chainable<null>;
+
+      if (afterHook) {
+        cy.log(`Running after hook for test "${name}"`);
+        testChain = testChain.then(() => afterHook.call(context)) as unknown as Cypress.Chainable<null>;
+      }
+
+      return testChain;
+    });
 }
 
 /**
@@ -367,7 +519,7 @@ function getDependentTests(testName: string): string[] {
  * 
  * // Conditional test execution
  * cytest('Feature X Test', 
- *   { runIf: () => Cypress.env('ENABLE_FEATURE_X') === true }, 
+ *   { runIf: () => cy.env(['ENABLE_FEATURE_X']).then(({ ENABLE_FEATURE_X }) => ENABLE_FEATURE_X === true) },
  *   () => {
  *     cy.log('Testing Feature X');
  *     cy.visit('/feature-x');
@@ -400,85 +552,16 @@ function getDependentTests(testName: string): string[] {
  */
 export function cytest(
   name: string, 
-  optionsOrFn: CytestOptions | (() => void | Cypress.Chainable<any>), 
-  fnOrUndefined?: () => void | Cypress.Chainable<any>
+  optionsOrFn: CytestOptions | TestExecutionCallback,
+  fnOrUndefined?: TestExecutionCallback
 ): Mocha.Test {
   // Determine if the second parameter is options or a function
   const options: CytestOptions = typeof optionsOrFn === 'function' ? {} : optionsOrFn;
-  const fn: () => void | Cypress.Chainable<any> = typeof optionsOrFn === 'function' ? optionsOrFn : fnOrUndefined!;
+  const fn = resolveTestCallback(optionsOrFn, fnOrUndefined);
+  const { cypressOptions } = splitCytestOptions(options);
 
-  // Use regular Cypress it() function
-  // Pass tags and other Cypress options to the underlying it function
-  // Create a copy of options excluding cytest-specific properties
-  const { runIf, before, after, tags, ...cypressOptions } = options;
-
-  // Add tags if they exist
-  const itOptions = tags ? { ...cypressOptions, tags } : cypressOptions;
-
-  // @ts-ignore
-  return it(name, itOptions, function() {
-    // Check if grepTags is defined and if this test's tags match
-    const grepTags = Cypress.env('grepTags');
-    if (grepTags && options.tags) {
-      const testTags = Array.isArray(options.tags) ? options.tags : [options.tags];
-      const requiredTags = Array.isArray(grepTags) ? grepTags : [grepTags];
-
-      // Check if any of the test's tags match any of the required tags
-      const hasMatchingTag = testTags.some(tag => 
-        requiredTags.some(reqTag => tag === reqTag)
-      );
-
-      if (!hasMatchingTag) {
-        cy.log(`Skipping test "${name}" because it doesn't have the required tag(s): ${grepTags}`);
-        cy.log('Test skipped');
-        this.skip();
-        return;
-      }
-    }
-
-    // Check if the runIf function exists and evaluates to false
-    if (options.runIf && !options.runIf()) {
-      cy.log(`Skipping test "${name}" because runIf condition is not met`);
-      cy.log('Test skipped');
-      this.skip(); // Skip this test instead of just returning
-      return;
-    }
-
-    // Check if any parent tests have failed
-    const parentTests = Object.entries(testDependencies)
-      .filter(([_, dependents]) => dependents.includes(name))
-      .map(([parent, _]) => parent);
-
-    const failedParents = parentTests.filter(parent => hasTestFailed(parent));
-
-    if (failedParents.length > 0) {
-      const parentTest = failedParents[0]; // Just take the first failed parent for the message
-      cy.log(`Skipping test "${name}" because its dependency "${parentTest}" failed`);
-      // Skip this test instead of just returning
-      cy.log('Test skipped');
-      this.skip();
-      return;
-    }
-
-    // If we get here, run the before hook (if any), then the test function, then the after hook (if any)
-    let testChain = cy.wrap(null, { log: false });
-
-    // Run the before hook if it exists
-    if (options.before) {
-      cy.log(`Running before hook for test "${name}"`);
-      testChain = testChain.then(() => options.before!.call(this)) as unknown as Cypress.Chainable<null>;
-    }
-
-    // Run the test function
-    testChain = testChain.then(() => fn.call(this)) as unknown as Cypress.Chainable<null>;
-
-    // Run the after hook if it exists
-    if (options.after) {
-      cy.log(`Running after hook for test "${name}"`);
-      testChain = testChain.then(() => options.after!.call(this)) as unknown as Cypress.Chainable<null>;
-    }
-
-    return testChain;
+  return it(name, cypressOptions, function() {
+    return executeCytest(name, options, fn, this);
   });
 }
 
@@ -498,7 +581,7 @@ export function cytest(
  * // Skip a test with options
  * cytest.skip('Advanced feature test', 
  *   { 
- *     runIf: () => Cypress.env('ENVIRONMENT') === 'production',
+ *     runIf: () => cy.env(['ENVIRONMENT']).then(({ ENVIRONMENT }) => ENVIRONMENT === 'production'),
  *     before: () => cy.log('This setup will not run')
  *   }, 
  *   () => {
@@ -509,12 +592,12 @@ export function cytest(
  */
 cytest.skip = function(
   name: string, 
-  optionsOrFn?: CytestOptions | (() => void | Cypress.Chainable<any>), 
-  fnOrUndefined?: () => void | Cypress.Chainable<any>
+  optionsOrFn?: CytestOptions | TestExecutionCallback,
+  fnOrUndefined?: TestExecutionCallback
 ): Mocha.Test {
   // Determine if the second parameter is options or a function
-  const fn: (() => void | Cypress.Chainable<any>) | undefined = 
-    optionsOrFn === undefined ? undefined : 
+  const fn: TestExecutionCallback | undefined =
+    optionsOrFn === undefined ? undefined :
     typeof optionsOrFn === 'function' ? optionsOrFn : 
     fnOrUndefined;
 
@@ -524,16 +607,9 @@ cytest.skip = function(
     typeof optionsOrFn === 'function' ? {} : 
     optionsOrFn;
 
-  // Pass tags and other Cypress options to the underlying it.skip function
-  // Create a copy of options excluding cytest-specific properties
-  const { runIf, before, after, tags, ...cypressOptions } = options;
+  const { cypressOptions } = splitCytestOptions(options);
 
-  // Add tags if they exist
-  const itOptions = tags ? { ...cypressOptions, tags } : cypressOptions;
-
-  // For skip, we don't need to check grepTags since the test is already being skipped
-  // @ts-ignore
-  return it.skip(name, itOptions, fn as any);
+  return it.skip(name, cypressOptions, fn as any);
 };
 
 /**
@@ -552,7 +628,7 @@ cytest.skip = function(
  * // Run only this test with options
  * cytest.only('Specific conditional test', 
  *   { 
- *     runIf: () => Cypress.env('DEBUG_MODE') === true,
+ *     runIf: () => cy.env(['DEBUG_MODE']).then(({ DEBUG_MODE }) => DEBUG_MODE === true),
  *     before: () => cy.log('Setting up for debugging')
  *   }, 
  *   () => {
@@ -565,84 +641,16 @@ cytest.skip = function(
  */
 cytest.only = function(
   name: string, 
-  optionsOrFn: CytestOptions | (() => void | Cypress.Chainable<any>), 
-  fnOrUndefined?: () => void | Cypress.Chainable<any>
+  optionsOrFn: CytestOptions | TestExecutionCallback,
+  fnOrUndefined?: TestExecutionCallback
 ): Mocha.Test {
   // Determine if the second parameter is options or a function
   const options: CytestOptions = typeof optionsOrFn === 'function' ? {} : optionsOrFn;
-  const fn: () => void | Cypress.Chainable<any> = typeof optionsOrFn === 'function' ? optionsOrFn : fnOrUndefined!;
+  const fn = resolveTestCallback(optionsOrFn, fnOrUndefined);
+  const { cypressOptions } = splitCytestOptions(options);
 
-  // Pass tags and other Cypress options to the underlying it.only function
-  // Create a copy of options excluding cytest-specific properties
-  const { runIf, before, after, tags, ...cypressOptions } = options;
-
-  // Add tags if they exist
-  const itOptions = tags ? { ...cypressOptions, tags } : cypressOptions;
-
-  // @ts-ignore
-  return it.only(name, itOptions, function() {
-    // Check if grepTags is defined and if this test's tags match
-    const grepTags = Cypress.env('grepTags');
-    if (grepTags && options.tags) {
-      const testTags = Array.isArray(options.tags) ? options.tags : [options.tags];
-      const requiredTags = Array.isArray(grepTags) ? grepTags : [grepTags];
-
-      // Check if any of the test's tags match any of the required tags
-      const hasMatchingTag = testTags.some(tag => 
-        requiredTags.some(reqTag => tag === reqTag)
-      );
-
-      if (!hasMatchingTag) {
-        cy.log(`Skipping test "${name}" because it doesn't have the required tag(s): ${grepTags}`);
-        cy.log('Test skipped');
-        this.skip();
-        return;
-      }
-    }
-
-    // Check if the runIf function exists and evaluates to false
-    if (options.runIf && !options.runIf()) {
-      cy.log(`Skipping test "${name}" because runIf condition is not met`);
-      cy.log('Test skipped');
-      this.skip(); // Skip this test instead of just returning
-      return;
-    }
-
-    // Check if any parent tests have failed
-    const parentTests = Object.entries(testDependencies)
-      .filter(([_, dependents]) => dependents.includes(name))
-      .map(([parent, _]) => parent);
-
-    const failedParents = parentTests.filter(parent => hasTestFailed(parent));
-
-    if (failedParents.length > 0) {
-      const parentTest = failedParents[0]; // Just take the first failed parent for the message
-      cy.log(`Skipping test "${name}" because its dependency "${parentTest}" failed`);
-      // Skip this test instead of just returning
-      cy.log('Test skipped');
-      this.skip();
-      return;
-    }
-
-    // If we get here, run the before hook (if any), then the test function, then the after hook (if any)
-    let testChain = cy.wrap(null, { log: false });
-
-    // Run the before hook if it exists
-    if (options.before) {
-      cy.log(`Running before hook for test "${name}"`);
-      testChain = testChain.then(() => options.before!.call(this)) as unknown as Cypress.Chainable<null>;
-    }
-
-    // Run the test function
-    testChain = testChain.then(() => fn.call(this)) as unknown as Cypress.Chainable<null>;
-
-    // Run the after hook if it exists
-    if (options.after) {
-      cy.log(`Running after hook for test "${name}"`);
-      testChain = testChain.then(() => options.after!.call(this)) as unknown as Cypress.Chainable<null>;
-    }
-
-    return testChain;
+  return it.only(name, cypressOptions, function() {
+    return executeCytest(name, options, fn, this);
   });
 };
 
@@ -656,9 +664,7 @@ beforeEach(function() {
     console.log(`[DEBUG] Failed tests: ${JSON.stringify(window.failedTests)}`);
 
     // Get all parent tests
-    const parentTests = Object.entries(testDependencies)
-      .filter(([_, dependents]) => dependents.includes(testName))
-      .map(([parent, _]) => parent);
+    const parentTests = getParentTests(testName);
 
     console.log(`[DEBUG] Parent tests for "${testName}": ${JSON.stringify(parentTests)}`);
 
@@ -690,26 +696,6 @@ afterEach(function(this: Mocha.Context) {
       markTestAsFailed(testName);
       console.log(`[DEBUG] Failed tests after update: ${JSON.stringify(window.failedTests)}`);
 
-      // Get all direct dependent tests
-      const directDependents = getDependentTests(testName);
-
-      // Function to recursively get all dependent tests (including nested dependents)
-      function getAllDependents(testName: string, visited: Set<string> = new Set()): string[] {
-        if (visited.has(testName)) {
-          return [];
-        }
-        visited.add(testName);
-
-        const directDeps = getDependentTests(testName);
-        const allDeps = [...directDeps];
-
-        for (const dep of directDeps) {
-          const nestedDeps = getAllDependents(dep, visited);
-          allDeps.push(...nestedDeps);
-        }
-
-        return allDeps;
-      }
 
       // Get all dependent tests (including nested dependents)
       const allDependents = getAllDependents(testName);
